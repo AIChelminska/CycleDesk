@@ -1,65 +1,83 @@
 ﻿using CycleDesk.Views;
 using System;
-using System.Data;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace CycleDesk
 {
-    public partial class MainDashboardWindow : Window
+    public partial class InventoryStatusWindow : Window
     {
         private string _username;
         private string _password;
         private string _fullName;
         private string _role;
 
-        public MainDashboardWindow(string username, string password, string fullName, string role)
+        public InventoryStatusWindow(string username, string password, string fullName, string role)
         {
             InitializeComponent();
-
-            // Zapisz dane użytkownika
             _username = username;
             _password = password;
             _fullName = fullName;
             _role = role;
 
-            // Ustaw dane w UI
+            // Ustaw dane użytkownika w UI
             lblUserFullName.Text = fullName;
             lblUserRole.Text = role;
 
-            // Ustaw Dashboard jako aktywny
-            SetActiveButton(btnDashboard);
+            // Ustaw Inventory jako aktywny przycisk
+            SetActiveButton(btnInventory);
+
+            // Rozwiń submenu Inventory (bo jesteśmy na stronie Inventory Status)
+            submenuInventory.Visibility = Visibility.Visible;
         }
 
-        private void SetActiveButton(System.Windows.Controls.Button activeButton)
+        // ===== ACTIVE BUTTON MANAGEMENT =====
+        private void SetActiveButton(Button activeButton)
         {
-            // Reset wszystkich buttonów - usuń Tag
+            // Resetuj wszystkie przyciski
             btnDashboard.Tag = null;
             btnInventory.Tag = null;
             btnSales.Tag = null;
             btnReports.Tag = null;
             btnAdministration.Tag = null;
 
-            // Usuń poprzednie tła (na wszelki wypadek)
-            btnDashboard.Background = Brushes.Transparent;
-            btnInventory.Background = Brushes.Transparent;
-            btnSales.Background = Brushes.Transparent;
-            btnReports.Background = Brushes.Transparent;
-            btnAdministration.Background = Brushes.Transparent;
+            btnDashboard.Background = System.Windows.Media.Brushes.Transparent;
+            btnInventory.Background = System.Windows.Media.Brushes.Transparent;
+            btnSales.Background = System.Windows.Media.Brushes.Transparent;
+            btnReports.Background = System.Windows.Media.Brushes.Transparent;
+            btnAdministration.Background = System.Windows.Media.Brushes.Transparent;
 
-            // Zaznacz aktywny - ustaw Tag="Active"
+            // Ustaw aktywny przycisk
             activeButton.Tag = "Active";
         }
 
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
+        private void ToggleSubmenu(StackPanel submenu)
         {
-            SetActiveButton(btnDashboard);
-            lblPageTitle.Text = "Dashboard";
-            MessageBox.Show("Dashboard clicked!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Jeśli submenu jest już otwarte, zamknij
+            if (submenu.Visibility == Visibility.Visible)
+            {
+                submenu.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            // Zamknij wszystkie inne submenu
+            submenuInventory.Visibility = Visibility.Collapsed;
+            submenuSales.Visibility = Visibility.Collapsed;
+            submenuReports.Visibility = Visibility.Collapsed;
+            submenuAdministration.Visibility = Visibility.Collapsed;
+
+            // Otwórz wybrane submenu
+            submenu.Visibility = Visibility.Visible;
         }
 
-        // ===== MENU TOGGLE =====
+        // ===== MENU NAVIGATION =====
+        private void Dashboard_Click(object sender, RoutedEventArgs e)
+        {
+            MainDashboardWindow dashboard = new MainDashboardWindow(_username, _password, _fullName, _role);
+            dashboard.Show();
+            this.Close();
+        }
+
         private void Inventory_Click(object sender, RoutedEventArgs e)
         {
             ToggleSubmenu(submenuInventory);
@@ -84,45 +102,23 @@ namespace CycleDesk
             SetActiveButton(btnAdministration);
         }
 
-        // ===== SUBMENU TOGGLE LOGIC =====
-        private void ToggleSubmenu(StackPanel submenu)
-        {
-            // Jeśli klikamy już otwarte submenu - zamknij
-            if (submenu.Visibility == Visibility.Visible)
-            {
-                submenu.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            // Zamknij wszystkie inne submenu
-            submenuInventory.Visibility = Visibility.Collapsed;
-            submenuSales.Visibility = Visibility.Collapsed;
-            submenuReports.Visibility = Visibility.Collapsed;
-            submenuAdministration.Visibility = Visibility.Collapsed;
-
-            // Otwórz kliknięte submenu
-            submenu.Visibility = Visibility.Visible;
-        }
-
-        // ===== INVENTORY SUBMENU HANDLERS =====
-        private void InventoryProducts_Click(object sender, RoutedEventArgs e)
+        // ===== SUBMENU NAVIGATION =====
+        private void Products_Click(object sender, RoutedEventArgs e)
         {
             ProductsWindow productsWindow = new ProductsWindow(_username, _password, _fullName, _role);
             productsWindow.Show();
             this.Close();
         }
 
-        private void InventoryCategories_Click(object sender, RoutedEventArgs e)
+        private void Categories_Click(object sender, RoutedEventArgs e)
         {
             CategoriesWindow categoriesWindow = new CategoriesWindow(_username, _password, _fullName, _role);
             categoriesWindow.Show();
             this.Close();
         }
 
-        private void InventoryStatus_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Inventory Status view - coming soon!");
-        }
+        // Pusta metoda - już jesteśmy na tej stronie
+        private void InventoryStatus_Click(object sender, RoutedEventArgs e) { }
 
         private void GoodsReceipt_Click(object sender, RoutedEventArgs e)
         {
@@ -138,47 +134,52 @@ namespace CycleDesk
             this.Close();
         }
 
-        // ===== SALES SUBMENU HANDLERS =====
         private void NewSale_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("New Sale view - coming soon!");
+            MessageBox.Show("New Sale view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void SalesHistory_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Sales History view - coming soon!");
+            MessageBox.Show("Sales History view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Invoices_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Invoices view - coming soon!");
+            MessageBox.Show("Invoices view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // ===== REPORTS SUBMENU HANDLERS =====
         private void SalesReports_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Sales Reports view - coming soon!");
+            MessageBox.Show("Sales Reports view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void InventoryReports_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Inventory Reports view - coming soon!");
+            MessageBox.Show("Inventory Reports view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ProductsToOrder_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Products to Order view - coming soon!");
+            MessageBox.Show("Products to Order view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // ===== ADMINISTRATION SUBMENU HANDLERS =====
         private void Users_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Users view - coming soon!");
+            MessageBox.Show("Users view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Settings view - coming soon!");
+            MessageBox.Show("Settings view - coming soon!", "Info",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Logout_Click(object sender, RoutedEventArgs e)
@@ -190,11 +191,8 @@ namespace CycleDesk
 
             if (result == MessageBoxResult.Yes)
             {
-                // Otwórz okno logowania
                 MainWindow loginWindow = new MainWindow();
                 loginWindow.Show();
-
-                // Zamknij dashboard
                 this.Close();
             }
         }

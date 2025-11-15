@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CycleDesk.Views;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -286,9 +287,22 @@ namespace CycleDesk
             categoriesWindow.Show();
             this.Close();
         }
-        private void InventoryStatus_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Inventory Status view - coming soon!"); }
-        private void GoodsReceipt_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Goods Receipt view - coming soon!"); }
-        private void Suppliers_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Suppliers view - coming soon!"); }
+        private void InventoryStatus_Click(object sender, RoutedEventArgs e) {
+            InventoryStatusWindow inventoryStatusWindow = new InventoryStatusWindow(_username, _password, _fullName, _role);
+            inventoryStatusWindow.Show();
+            this.Close();
+        }
+        private void GoodsReceipt_Click(object sender, RoutedEventArgs e) {
+            GoodsReceiptWindow goodsReceiptWindow = new GoodsReceiptWindow(_username, _password, _fullName, _role);
+            goodsReceiptWindow.Show();
+            this.Close();
+        }
+        private void Suppliers_Click(object sender, RoutedEventArgs e)
+        {
+            SuppliersWindow suppliersWindow = new SuppliersWindow(_username, _password, _fullName, _role);
+            suppliersWindow.Show();
+            this.Close();
+        }
         private void NewSale_Click(object sender, RoutedEventArgs e) { MessageBox.Show("New Sale view - coming soon!"); }
         private void SalesHistory_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Sales History view - coming soon!"); }
         private void Invoices_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Invoices view - coming soon!"); }
@@ -312,5 +326,7 @@ namespace CycleDesk
                 this.Close();
             }
         }
+
+
     }
 }
