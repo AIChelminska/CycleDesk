@@ -1,6 +1,8 @@
 ﻿using CycleDesk.Views;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,6 +16,9 @@ namespace CycleDesk
         private string _password;
         private string _fullName;
         private string _role;
+
+        // Lista produktów w paragonie (tylko prototyp)
+        private ObservableCollection<dynamic> _receiptProducts = new ObservableCollection<dynamic>();
 
         public GoodsReceiptWindow(string username, string password, string fullName, string role)
         {
@@ -32,6 +37,9 @@ namespace CycleDesk
 
             // Rozwiń submenu Inventory
             submenuInventory.Visibility = Visibility.Visible;
+
+            // Podłącz DataGrid do listy produktów
+            dgProducts.ItemsSource = _receiptProducts;
         }
 
         // ===== ACTIVE BUTTON MANAGEMENT =====
@@ -241,6 +249,9 @@ namespace CycleDesk
             modalToggleSwitch.IsChecked = false; // FALSE = Accepted (zielony)
             modalWarningRejected.Visibility = Visibility.Collapsed;
 
+            // Wyczyść listę produktów
+            _receiptProducts.Clear();
+
             // Reset status label
             if (modalStatusLabel != null)
             {
@@ -310,6 +321,7 @@ namespace CycleDesk
             // TODO: Save to database
             MessageBox.Show($"Receipt {modalTxtReceiptNo.Text} saved successfully!\n\n" +
                            $"Supplier: {((ComboBoxItem)modalCmbSupplier.SelectedItem).Content}\n" +
+                           $"Products: {_receiptProducts.Count}\n" +
                            $"Total Value: {modalTxtTotalValue.Text} PLN\n" +
                            $"Status: {(modalToggleSwitch.IsChecked == true ? "Rejected" : "Accepted")}",
                            "Success",
@@ -354,6 +366,61 @@ namespace CycleDesk
             }
         }
 
+        private void AddProduct_Click(object sender, RoutedEventArgs e)
+        {
+            // Pokaż modal dodawania produktu
+            productModalOverlay.Visibility = Visibility.Visible;
+
+            // Reset formularza
+            productModalCmbProduct.SelectedIndex = 0;
+            productModalTxtQuantity.Clear();
+            productModalTxtPurchasePrice.Clear();
+        }
+
+        private void RemoveProduct_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button?.DataContext != null)
+            {
+                _receiptProducts.Remove(button.DataContext);
+            }
+        }
+
+        private void CloseProductModal_Click(object sender, RoutedEventArgs e)
+        {
+            productModalOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void AddProductToReceipt_Click(object sender, RoutedEventArgs e)
+        {
+            if (productModalCmbProduct.SelectedIndex > 0 &&
+                !string.IsNullOrWhiteSpace(productModalTxtQuantity.Text) &&
+                !string.IsNullOrWhiteSpace(productModalTxtPurchasePrice.Text))
+            {
+                string productName = ((ComboBoxItem)productModalCmbProduct.SelectedItem).Content.ToString();
+                int.TryParse(productModalTxtQuantity.Text, out int qty);
+                decimal.TryParse(productModalTxtPurchasePrice.Text, out decimal price);
+
+                _receiptProducts.Add(new
+                {
+                    ProductName = productName,
+                    Quantity = qty,
+                    PurchasePrice = price,
+                    TotalValue = qty * price
+                });
+
+                productModalOverlay.Visibility = Visibility.Collapsed;
+
+                MessageBox.Show($"Product added successfully!", "Success",
+                               MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Please fill all fields!", "Validation Error",
+                               MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
         private string GenerateReceiptNumber()
         {
             // TODO: Get last number from database and increment
@@ -363,4 +430,4 @@ namespace CycleDesk
             return $"PZ/{nextNumber:D3}";
         }
     }
-    }
+}

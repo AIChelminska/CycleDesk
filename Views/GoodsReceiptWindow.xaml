@@ -1285,6 +1285,7 @@ BorderThickness="1">
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 1: Receipt No | Supplier Invoice No -->
@@ -1594,58 +1595,276 @@ BorderThickness="1">
                                 </StackPanel>
 
 
-                                <!-- Row 6: Photo Upload (Full Width) -->
-                                <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,0">
-                                    <TextBlock Text="Attachments / Photos:"
-                                      FontSize="13"
+                                            <!-- Row 6: Products Section (Full Width) -->
+            <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,25">
+                <Grid Margin="0,0,0,12">
+                    <TextBlock Text="Products:"
+                      FontSize="13"
+                      FontWeight="SemiBold"
+                      Foreground="#FF2D3E50"
+                      VerticalAlignment="Center"/>
+
+                                        <Button x:Name="btnAddProduct"
+       Content="+ Add Product"
+       Height="36"
+       Padding="20,0"
+       FontSize="13"
+       FontWeight="SemiBold"
+       Background="#FF2D3E50"
+       Foreground="White"
+       BorderThickness="0"
+       Cursor="Hand"
+       HorizontalAlignment="Right"
+       Click="AddProduct_Click">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                               CornerRadius="8"
+                               Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FF1E2A36"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter Property="Background" Value="#FF141D28"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </Grid>
+
+                <!-- Products DataGrid -->
+                <Border BorderBrush="#FFDEE2E6"
+                       BorderThickness="1"
+                       CornerRadius="8"
+                       Background="White">
+                    <DataGrid x:Name="dgProducts"
+                             Height="250"
+                             AutoGenerateColumns="False"
+                             CanUserAddRows="False"
+                             CanUserDeleteRows="False"
+                             CanUserReorderColumns="False"
+                             CanUserResizeRows="False"
+                             SelectionMode="Single"
+                             HeadersVisibility="Column"
+                             GridLinesVisibility="Horizontal"
+                             BorderThickness="0"
+                             Background="White"
+                             RowBackground="White"
+                             AlternatingRowBackground="#FFF8F9FA">
+
+                        <DataGrid.Resources>
+                            <!-- Remove default focus visual -->
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                <Setter Property="Padding" Value="12,8"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#FFE9ECEF"/>
+                                        <Setter Property="Foreground" Value="#FF2D3E50"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+
+                            <!-- Header Style -->
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#FFF8F9FA"/>
+                                <Setter Property="Foreground" Value="#FF6C757D"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="FontSize" Value="13"/>
+                                <Setter Property="Padding" Value="12,12"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="BorderBrush" Value="#FFDEE2E6"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                            </Style>
+                        </DataGrid.Resources>
+
+                        <DataGrid.Columns>
+                            <!-- Product Name -->
+                            <DataGridTextColumn Header="Product Name" 
+                                               Binding="{Binding ProductName}" 
+                                               Width="*"
+                                               IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="5,0"/>
+                                        <Setter Property="FontWeight" Value="Medium"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Quantity -->
+                            <DataGridTextColumn Header="Quantity" 
+                                               Binding="{Binding Quantity, StringFormat=N0}" 
+                                               Width="110"
+                                               IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextAlignment" Value="Center"/>
+                                        <Setter Property="Padding" Value="5,0"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Purchase Price -->
+                            <DataGridTextColumn Header="Purchase Price" 
+                                               Binding="{Binding PurchasePrice, StringFormat='{}{0:N2} PLN'}" 
+                                               Width="140"
+                                               IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextAlignment" Value="Right"/>
+                                        <Setter Property="Padding" Value="5,0"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Total Value -->
+                            <DataGridTextColumn Header="Total Value" 
+                                               Binding="{Binding TotalValue, StringFormat='{}{0:N2} PLN'}" 
+                                               Width="140"
+                                               IsReadOnly="True">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextAlignment" Value="Right"/>
+                                        <Setter Property="Padding" Value="5,0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <!-- Actions Column -->
+                            <DataGridTemplateColumn Header="Actions" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Remove"
+                                               Height="28"
+                                               Padding="10,0"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               Background="#FFDC3545"
+                                               Foreground="White"
+                                               BorderThickness="0"
+                                               Cursor="Hand"
+                                               Click="RemoveProduct_Click">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                       CornerRadius="6">
+                                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                                    VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FFC82333"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <!-- Total Summary -->
+                <Grid Margin="0,15,0,0">
+                    <Border Background="#FFF8F9FA"
+                           BorderBrush="#FFDEE2E6"
+                           BorderThickness="1"
+                           CornerRadius="8"
+                           Padding="15,12"
+                           HorizontalAlignment="Right">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Receipt Total:"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
                                       Foreground="#FF6C757D"
-                                      Margin="0,0,0,8"/>
-
-                                    <!-- Warning for Rejected deliveries -->
-                                    <Border x:Name="modalWarningRejected"
-                                   Background="#FFFEF3C7"
-                                   BorderBrush="#FFD97706"
-                                   BorderThickness="1"
-                                   CornerRadius="8"
-                                   Padding="12,10"
-                                   Margin="0,0,0,10"
-                                   Visibility="Collapsed">
-                                        <TextBlock Text="⚠ Photos are required for rejected deliveries"
-                                          FontSize="13"
-                                          FontWeight="SemiBold"
-                                          Foreground="#FFD97706"/>
-                                    </Border>
-
-                                    <Border Width="720"
-                                   Height="120"
-                                   Background="#FFF8F9FA"
-                                   BorderBrush="#FFDEE2E6"
-                                   BorderThickness="2"
-                                   CornerRadius="10"
-                                   Cursor="Hand"
-                                   HorizontalAlignment="Left">
-                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                            <Viewbox Width="40" Height="40" Margin="0,0,0,10">
-                                                <Canvas Width="24" Height="24">
-                                                    <Path Data="M9,2V7.38L10.38,8.76C10.87,8.27 11.5,8 12.19,8C13.94,8 15.31,9.37 15.31,11.12C15.31,11.81 15.04,12.44 14.55,12.93L15.93,14.31V2H9M19,2V6.5L20.5,8V2H19M14.97,11.03C14.97,10.74 14.72,10.5 14.44,10.5C14.15,10.5 13.91,10.74 13.91,11.03C13.91,11.31 14.15,11.56 14.44,11.56C14.72,11.56 14.97,11.31 14.97,11.03M5,4V8.5L8.5,12H5L3,14L5,16V22H15V21L5.5,11.5V10H6L7.5,11.5L9,10V4H5M3.16,6.35L1.39,4.58L2.8,3.16L4.58,4.94L3.16,6.35Z"
-                                                  Fill="#FF6C757D"/>
-                                                </Canvas>
-                                            </Viewbox>
-                                            <TextBlock Text="Click to upload photos"
-                                              FontSize="14"
-                                              Foreground="#FF6C757D"
-                                              TextAlignment="Center"
-                                              Margin="0,0,0,4"/>
-                                            <TextBlock Text="JPG, PNG - Max 5MB each"
-                                              FontSize="12"
-                                              Foreground="#FFADB5BD"
-                                              TextAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,15,0"/>
+                            <TextBlock x:Name="txtReceiptTotal"
+                                      Text="0.00 PLN"
+                                      FontSize="16"
+                                      FontWeight="Bold"
+                                      Foreground="#FF2D3E50"
+                                      VerticalAlignment="Center"/>
                         </StackPanel>
-                    </ScrollViewer>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+
+            <!-- Row 7: Photo Upload (Full Width) -->
+                                <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,20,0,0">
+                                    <TextBlock Text="Attachments / Photos:"
+                  FontSize="13"
+                  Foreground="#FF6C757D"
+                  Margin="0,0,0,8"/>
+
+                <!-- Warning for Rejected deliveries -->
+                <Border x:Name="modalWarningRejected"
+               Background="#FFFEF3C7"
+               BorderBrush="#FFD97706"
+               BorderThickness="1"
+               CornerRadius="8"
+               Padding="12,10"
+               Margin="0,0,0,10"
+               Visibility="Collapsed">
+                    <TextBlock Text="⚠ Photos are required for rejected deliveries"
+                      FontSize="13"
+                      FontWeight="SemiBold"
+                      Foreground="#FFD97706"/>
+                </Border>
+
+                <Border Width="720"
+               Height="120"
+               Background="#FFF8F9FA"
+               BorderBrush="#FFDEE2E6"
+               BorderThickness="2"
+               CornerRadius="10"
+               Cursor="Hand"
+               HorizontalAlignment="Left">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Viewbox Width="40" Height="40" Margin="0,0,0,10">
+                            <Canvas Width="24" Height="24">
+                                <Path Data="M9,2V7.38L10.38,8.76C10.87,8.27 11.5,8 12.19,8C13.94,8 15.31,9.37 15.31,11.12C15.31,11.81 15.04,12.44 14.55,12.93L15.93,14.31V2H9M19,2V6.5L20.5,8V2H19M14.97,11.03C14.97,10.74 14.72,10.5 14.44,10.5C14.15,10.5 13.91,10.74 13.91,11.03C13.91,11.31 14.15,11.56 14.44,11.56C14.72,11.56 14.97,11.31 14.97,11.03M5,4V8.5L8.5,12H5L3,14L5,16V22H15V21L5.5,11.5V10H6L7.5,11.5L9,10V4H5M3.16,6.35L1.39,4.58L2.8,3.16L4.58,4.94L3.16,6.35Z"
+                              Fill="#FF6C757D"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="Click to upload photos"
+                          FontSize="14"
+                          Foreground="#FF6C757D"
+                          TextAlignment="Center"
+                          Margin="0,0,0,4"/>
+                        <TextBlock Text="JPG, PNG - Max 5MB each"
+                          FontSize="12"
+                          Foreground="#FFADB5BD"
+                          TextAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</ScrollViewer>
 
                     <!-- Footer Buttons -->
                     <Grid Grid.Row="2" Margin="0,30,0,0">
@@ -1711,6 +1930,205 @@ BorderThickness="1">
                                                CornerRadius="10">
                                                     <ContentPresenter HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FF1E2A36"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter Property="Background" Value="#FF141D28"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+        <!-- PRODUCT SELECTION MODAL OVERLAY -->
+        <Grid x:Name="productModalOverlay"
+      Grid.ColumnSpan="2"
+      Visibility="Collapsed"
+      Background="#CC000000"
+      Panel.ZIndex="2000">
+            <Border Width="550"
+                    MaxHeight="600"
+                    Background="White"
+                    CornerRadius="12"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30"
+                                     ShadowDepth="0"
+                                     Opacity="0.3"/>
+                </Border.Effect>
+
+                <Grid Margin="35">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="Add Product to Receipt"
+                                  FontSize="22"
+                                  FontWeight="Bold"
+                                  Foreground="#FF2D3E50"
+                                  Margin="0,0,0,8"/>
+                        <TextBlock Text="Select a product and enter quantity and purchase price"
+                                  FontSize="13"
+                                  Foreground="#FF6C757D"
+                                  Margin="0,0,0,25"/>
+                    </StackPanel>
+
+                    <!-- Form Fields -->
+                    <StackPanel Grid.Row="1">
+                        <!-- Product Selection -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Product:"
+                                      FontSize="13"
+                                      Foreground="#FF6C757D"
+                                      Margin="0,0,0,8"/>
+                            <ComboBox x:Name="productModalCmbProduct"
+                                     Height="45"
+                                     FontSize="14"
+                                     Style="{StaticResource FilterComboBoxStyle}">
+                                <ComboBoxItem Content="-- Select Product --" IsSelected="True"/>
+                                <ComboBoxItem Content="Mountain Bike - Trek X-Caliber 8"/>
+                                <ComboBoxItem Content="Road Bike - Specialized Allez"/>
+                                <ComboBoxItem Content="City Bike - Giant Escape 3"/>
+                                <ComboBoxItem Content="Electric Bike - Cannondale Quick Neo"/>
+                                <ComboBoxItem Content="BMX Bike - Mongoose Legion L100"/>
+                                <ComboBoxItem Content="Helmet - Giro Syntax MIPS"/>
+                                <ComboBoxItem Content="Bike Lock - Kryptonite Evolution"/>
+                                <ComboBoxItem Content="Water Bottle - CamelBak Podium"/>
+                                <ComboBoxItem Content="Bike Pump - Topeak JoeBlow Sport III"/>
+                                <ComboBoxItem Content="Cycling Gloves - Pearl Izumi Elite"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Quantity -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Quantity:"
+                                      FontSize="13"
+                                      Foreground="#FF6C757D"
+                                      Margin="0,0,0,8"/>
+                            <TextBox x:Name="productModalTxtQuantity"
+                                    Height="45"
+                                    Padding="12,0"
+                                    FontSize="14"
+                                    BorderBrush="#FFDEE2E6"
+                                    BorderThickness="1"
+                                    VerticalContentAlignment="Center">
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="8"/>
+                                    </Style>
+                                </TextBox.Resources>
+                            </TextBox>
+                        </StackPanel>
+
+                        <!-- Purchase Price -->
+                        <StackPanel Margin="0,0,0,0">
+                            <TextBlock Text="Purchase Price:"
+                                      FontSize="13"
+                                      Foreground="#FF6C757D"
+                                      Margin="0,0,0,8"/>
+                            <Grid>
+                                <TextBox x:Name="productModalTxtPurchasePrice"
+                                        Height="45"
+                                        Padding="12,0,60,0"
+                                        FontSize="14"
+                                        BorderBrush="#FFDEE2E6"
+                                        BorderThickness="1"
+                                        VerticalContentAlignment="Center">
+                                    <TextBox.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="8"/>
+                                        </Style>
+                                    </TextBox.Resources>
+                                </TextBox>
+                                <TextBlock Text="PLN"
+                                          FontSize="13"
+                                          Foreground="#FF6C757D"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Right"
+                                          Margin="0,0,15,0"
+                                          IsHitTestVisible="False"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Footer Buttons -->
+                    <Grid Grid.Row="2" Margin="0,30,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Cancel Button -->
+                        <Button Grid.Column="0"
+                               Content="Cancel"
+                               Height="50"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Background="#FFF8F9FA"
+                               Foreground="#FF6C757D"
+                               BorderThickness="1"
+                               BorderBrush="#FFDEE2E6"
+                               Cursor="Hand"
+                               Click="CloseProductModal_Click">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                                       BorderThickness="{TemplateBinding BorderThickness}"
+                                                       CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FFE9ECEF"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Add Button -->
+                        <Button Grid.Column="2"
+                               Content="Add to Receipt"
+                               Height="50"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Background="#FF2D3E50"
+                               Foreground="White"
+                               BorderThickness="0"
+                               Cursor="Hand"
+                               Click="AddProductToReceipt_Click">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                       CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>
