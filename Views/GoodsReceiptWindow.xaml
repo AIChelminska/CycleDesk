@@ -1643,150 +1643,162 @@ BorderThickness="1">
                                         </Button>
                                     </Grid>
 
-                <!-- Products DataGrid -->
-                <Border BorderBrush="#FFDEE2E6"
-                       BorderThickness="1"
-                       CornerRadius="8"
-                       Background="White">
-                    <DataGrid x:Name="dgProducts"
-                             Height="250"
-                             AutoGenerateColumns="False"
-                             CanUserAddRows="False"
-                             CanUserDeleteRows="False"
-                             CanUserReorderColumns="False"
-                             CanUserResizeRows="False"
-                             SelectionMode="Single"
-                             HeadersVisibility="Column"
-                             GridLinesVisibility="Horizontal"
-                             BorderThickness="0"
-                             Background="White"
-                             RowBackground="White"
-                             AlternatingRowBackground="#FFF8F9FA">
+                                    <!-- Products DataGrid -->
+                                    <Border BorderBrush="#FFDEE2E6"
+       BorderThickness="1"
+       CornerRadius="8"
+       Background="White">
+                                        <DataGrid x:Name="dgProducts"
+             Height="250"
+             AutoGenerateColumns="False"
+             CanUserAddRows="False"
+             CanUserDeleteRows="False"
+             CanUserReorderColumns="False"
+             CanUserResizeRows="False"
+             SelectionMode="Single"
+             HeadersVisibility="Column"
+             GridLinesVisibility="All"
+             HorizontalGridLinesBrush="#FFDEE2E6"
+             VerticalGridLinesBrush="#FFDEE2E6"
+             BorderThickness="0"
+             Background="White"
+             RowBackground="White"
+             AlternatingRowBackground="#FFF8F9FA">
 
-                        <DataGrid.Resources>
-                            <!-- Remove default focus visual -->
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                                <Setter Property="Padding" Value="12,8"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#FFE9ECEF"/>
-                                        <Setter Property="Foreground" Value="#FF2D3E50"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-
-                            <!-- Header Style -->
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="#FFF8F9FA"/>
-                                <Setter Property="Foreground" Value="#FF6C757D"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="FontSize" Value="13"/>
-                                <Setter Property="Padding" Value="12,12"/>
-                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                <Setter Property="BorderBrush" Value="#FFDEE2E6"/>
-                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                            </Style>
-                        </DataGrid.Resources>
-
-                        <DataGrid.Columns>
-                            <!-- Product Name -->
-                            <DataGridTextColumn Header="Product Name" 
-                                               Binding="{Binding ProductName}" 
-                                               Width="*"
-                                               IsReadOnly="True">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Padding" Value="5,0"/>
-                                        <Setter Property="FontWeight" Value="Medium"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Quantity -->
-                            <DataGridTextColumn Header="Quantity" 
-                                               Binding="{Binding Quantity, StringFormat=N0}" 
-                                               Width="110"
-                                               IsReadOnly="True">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="TextAlignment" Value="Center"/>
-                                        <Setter Property="Padding" Value="5,0"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Purchase Price -->
-                            <DataGridTextColumn Header="Purchase Price" 
-                                               Binding="{Binding PurchasePrice, StringFormat='{}{0:N2} PLN'}" 
-                                               Width="140"
-                                               IsReadOnly="True">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="TextAlignment" Value="Right"/>
-                                        <Setter Property="Padding" Value="5,0"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Total Value -->
-                            <DataGridTextColumn Header="Total Value" 
-                                               Binding="{Binding TotalValue, StringFormat='{}{0:N2} PLN'}" 
-                                               Width="140"
-                                               IsReadOnly="True">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="TextAlignment" Value="Right"/>
-                                        <Setter Property="Padding" Value="5,0"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <!-- Actions Column -->
-                            <DataGridTemplateColumn Header="Actions" Width="90">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Remove"
-                                               Height="28"
-                                               Padding="10,0"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               Background="#FFDC3545"
-                                               Foreground="White"
-                                               BorderThickness="0"
-                                               Cursor="Hand"
-                                               Click="RemoveProduct_Click">
-                                            <Button.Style>
-                                                <Style TargetType="Button">
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <Border Background="{TemplateBinding Background}"
-                                                                       CornerRadius="6">
-                                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                                    VerticalAlignment="Center"/>
-                                                                </Border>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
+                                            <DataGrid.Resources>
+                                                <!-- Remove default focus visual -->
+                                                <Style TargetType="DataGridCell">
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                                                     <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FFC82333"/>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter Property="Background" Value="#FFE9ECEF"/>
+                                                            <Setter Property="Foreground" Value="#FF2D3E50"/>
                                                         </Trigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </Button.Style>
-                                        </Button>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
 
-                <!-- Total Summary -->
+                                                <!-- Header Style -->
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="Background" Value="#FFF8F9FA"/>
+                                                    <Setter Property="Foreground" Value="#FF6C757D"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="FontSize" Value="13"/>
+                                                    <Setter Property="Padding" Value="12,12"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                                    <Setter Property="BorderBrush" Value="#FFDEE2E6"/>
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                                </Style>
+                                            </DataGrid.Resources>
+
+                                            <DataGrid.Columns>
+                                                <!-- Product Name -->
+                                                <DataGridTextColumn Header="Product Name" 
+                               Binding="{Binding ProductName}" 
+                               Width="*"
+                               IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Padding" Value="12,0"/>
+                                                            <Setter Property="FontWeight" Value="Medium"/>
+                                                            <Setter Property="TextAlignment" Value="Left"/>
+                                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                            <Setter Property="ToolTip" Value="{Binding ProductName}"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <!-- Quantity -->
+                                                <DataGridTextColumn Header="Quantity" 
+                               Binding="{Binding Quantity, StringFormat=N0}" 
+                               Width="140"
+                               IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="TextAlignment" Value="Center"/>
+                                                            <Setter Property="Padding" Value="12,0"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <!-- Purchase Price -->
+                                                <DataGridTextColumn Header="Purchase Price" 
+                               Binding="{Binding PurchasePrice, StringFormat='{}{0:N2} PLN'}" 
+                               Width="140"
+                               IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="TextAlignment" Value="Center"/>
+                                                            <Setter Property="Padding" Value="12,0"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <!-- Total Value -->
+                                                <DataGridTextColumn Header="Total Value" 
+                               Binding="{Binding TotalValue, StringFormat='{}{0:N2} PLN'}" 
+                               Width="140"
+                               IsReadOnly="True">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="TextAlignment" Value="Center"/>
+                                                            <Setter Property="Padding" Value="12,0"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+
+                                                <!-- Actions Column -->
+                                                <DataGridTemplateColumn Header="Actions" Width="140">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Content="Remove"
+                   Height="25"
+                                                                    Margin="0,5"
+                   Padding="20,0"
+                   FontSize="12"
+                   FontWeight="Medium"
+                   Background="#FFDC3545"
+                   Foreground="White"
+                   BorderThickness="0"
+                   Cursor="Hand"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Click="RemoveProduct_Click">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button">
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border Background="{TemplateBinding Background}"
+                                           CornerRadius="6"
+                                           Padding="{TemplateBinding Padding}">
+                                                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                                                                    </Border>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Background" Value="#FFC82333"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Border>
+
+                                    <!-- Total Summary -->
                 <Grid Margin="0,15,0,0">
                     <Border Background="#FFF8F9FA"
                            BorderBrush="#FFDEE2E6"

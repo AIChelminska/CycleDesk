@@ -398,8 +398,30 @@ namespace CycleDesk
                 !string.IsNullOrWhiteSpace(productModalTxtPurchasePrice.Text))
             {
                 string productName = ((ComboBoxItem)productModalCmbProduct.SelectedItem).Content.ToString();
-                int.TryParse(productModalTxtQuantity.Text, out int qty);
-                decimal.TryParse(productModalTxtPurchasePrice.Text, out decimal price);
+
+                // Parsowanie ilości
+                if (!int.TryParse(productModalTxtQuantity.Text, out int qty) || qty <= 0)
+                {
+                    MessageBox.Show("Please enter a valid quantity (number greater than 0)!",
+                                   "Validation Error",
+                                   MessageBoxButton.OK,
+                                   MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Parsowanie ceny - akceptuje zarówno kropkę jak i przecinek
+                string priceText = productModalTxtPurchasePrice.Text.Replace(',', '.');
+                if (!decimal.TryParse(priceText,
+                                     System.Globalization.NumberStyles.Any,
+                                     System.Globalization.CultureInfo.InvariantCulture,
+                                     out decimal price) || price <= 0)
+                {
+                    MessageBox.Show("Please enter a valid price (number greater than 0)!\nYou can use both comma (,) and dot (.) as decimal separator.",
+                                   "Validation Error",
+                                   MessageBoxButton.OK,
+                                   MessageBoxImage.Warning);
+                    return;
+                }
 
                 _receiptProducts.Add(new
                 {

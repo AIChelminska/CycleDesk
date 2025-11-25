@@ -303,7 +303,11 @@ namespace CycleDesk
             suppliersWindow.Show();
             this.Close();
         }
-        private void NewSale_Click(object sender, RoutedEventArgs e) { MessageBox.Show("New Sale view - coming soon!"); }
+        private void NewSale_Click(object sender, RoutedEventArgs e) {
+            NewSaleWindow newSaleWindow = new NewSaleWindow(_username, _password, _fullName, _role);
+            newSaleWindow.Show();
+            this.Close();
+        }
         private void SalesHistory_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Sales History view - coming soon!"); }
         private void Invoices_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Invoices view - coming soon!"); }
         private void SalesReports_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Sales Reports view - coming soon!"); }

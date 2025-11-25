@@ -1,0 +1,612 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="CycleDesk.UsersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CycleDesk - Users Management" 
+        Height="900" 
+        Width="1600"
+        WindowStartupLocation="CenterScreen"
+        Background="#FFF5F5F5"
+        WindowState="Maximized">
+
+    <Window.Resources>
+        <!-- MENU BUTTON STYLE -->
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FFADB5BD"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="20,15"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border Background="Transparent" CornerRadius="0"/>
+                            <Grid x:Name="hoverLayer" Opacity="0">
+                                <Border Width="3" HorizontalAlignment="Left" Background="White"/>
+                                <Border Margin="3,0,0,0">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                            <GradientStop Color="#33FFFFFF" Offset="0"/>
+                                            <GradientStop Color="#03FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                            <Grid x:Name="activeLayer" Opacity="0">
+                                <Border Width="3" HorizontalAlignment="Left" Background="White"/>
+                                <Border Margin="3,0,0,0">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                            <GradientStop Color="#33FFFFFF" Offset="0"/>
+                                            <GradientStop Color="#03FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="Active">
+                                <Setter TargetName="activeLayer" Property="Opacity" Value="1"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="Tag" Value="{x:Null}"/>
+                                </MultiTrigger.Conditions>
+                                <MultiTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="hoverLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.EnterActions>
+                                <MultiTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="hoverLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         From="1" To="0" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.ExitActions>
+                                <Setter Property="Foreground" Value="White"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- SUBMENU BUTTON STYLE -->
+        <Style x:Key="SubmenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FFADB5BD"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="45,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#1AFFFFFF"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- LEWE MENU - IDENTYCZNE JAK W DASHBOARD -->
+        <Border Grid.Column="0" Background="#181C3D">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Logo -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,0">
+                    <Image Source="/Images/logo2.png"
+                Width="100" 
+                Height="100" 
+
+                RenderOptions.BitmapScalingMode="HighQuality"/>
+                </StackPanel>
+
+                <!-- Menu -->
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="MAIN MENU"
+                    FontSize="11"
+                    FontWeight="SemiBold"
+                    Foreground="#FF7F8C9A"
+                    Margin="20,0,0,15"/>
+
+                    <!-- Dashboard -->
+                    <Button x:Name="btnDashboard"
+                Style="{StaticResource MenuButtonStyle}"
+                Click="Dashboard_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" FontSize="18" Margin="0,0,15,0"/>
+                            <TextBlock Text="Dashboard" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Inventory -->
+                    <Button x:Name="btnInventory"
+                Style="{StaticResource MenuButtonStyle}"
+                Click="Inventory_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📦" FontSize="18" Margin="0,0,15,0"/>
+                            <TextBlock Text="Inventory" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Inventory Submenu -->
+                    <StackPanel x:Name="submenuInventory" Visibility="Collapsed">
+                        <Button Style="{StaticResource MenuButtonStyle}"
+                    Padding="45,12"
+                    Click="Products_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📦" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Products" FontSize="13" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+                    Padding="45,12"
+                    Click="Categories_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📋" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Categories" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+                    Padding="45,12"
+                    Click="InventoryStatus_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Inventory Status" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+                    Padding="45,12"
+                    Click="GoodsReceipt_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📥" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Goods Receipt" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+                    Padding="45,12"
+                    Click="Suppliers_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🚚" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Suppliers" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Sales -->
+                    <Button x:Name="btnSales"
+    Style="{StaticResource MenuButtonStyle}"
+    Click="Sales_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🛒" FontSize="18" Margin="0,0,15,0"/>
+                            <TextBlock Text="Sales" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+
+                    <!-- Sales Submenu -->
+                    <StackPanel x:Name="submenuSales" Visibility="Collapsed">
+                        <Button Style="{StaticResource MenuButtonStyle}"
+        Padding="45,12"
+        Click="NewSale_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🖨️" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="New Sale" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+        Padding="45,12"
+        Click="SalesHistory_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔍" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="History" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+        Padding="45,12"
+        Click="Invoices_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📄" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Invoices" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Reports -->
+                    <Button x:Name="btnReports"
+Style="{StaticResource MenuButtonStyle}"
+Click="Reports_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📈" FontSize="18" Margin="0,0,15,0"/>
+                            <TextBlock Text="Reports" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Reports Submenu -->
+                    <StackPanel x:Name="submenuReports" Visibility="Collapsed">
+                        <Button Style="{StaticResource MenuButtonStyle}"
+            Padding="45,12"
+            Click="SalesReports_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💵" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Sales Reports" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+            Padding="45,12"
+            Click="InventoryReports_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📊" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Inventory Reports" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+            Padding="45,12"
+            Click="ProductsToOrder_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚠️" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Products to Order" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Administration -->
+                    <Button x:Name="btnAdministration"
+Style="{StaticResource MenuButtonStyle}"
+Click="Administration_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙️" FontSize="18" Margin="0,0,15,0"/>
+                            <TextBlock Text="Administration" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Administration Submenu -->
+                    <StackPanel x:Name="submenuAdministration" Visibility="Collapsed">
+                        <Button Style="{StaticResource MenuButtonStyle}"
+            Padding="45,12"
+            Click="Users_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👥" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Users" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}"
+            Padding="45,12"
+            Click="Settings_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔧" FontSize="14" Margin="0,0,12,0" Opacity="0.7"/>
+                                <TextBlock Text="Settings" FontSize="13" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- User Info -->
+                <StackPanel Grid.Row="2" Margin="20,0,20,30">
+                    <Border Background="#FF1E2A36"
+                CornerRadius="10"
+                Padding="15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0">
+                                <TextBlock x:Name="lblUserFullName"
+                               Text="Admin User"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,0,0,5"/>
+                                <TextBlock x:Name="lblUserRole"
+                               Text="Supervisor"
+                               FontSize="12"
+                               Foreground="#FF7F8C9A"/>
+                            </StackPanel>
+
+                            <Button Grid.Row="1"
+                        Content="Logout"
+                        Margin="0,15,0,0"
+                        Height="35"
+                        Background="#FFDC3545"
+                        Foreground="White"
+                        BorderThickness="0"
+                        FontWeight="SemiBold"
+                        Cursor="Hand"
+                        Click="Logout_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="8">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FFC82333"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top Bar -->
+            <Border Grid.Row="0" Background="White" Padding="30,20" BorderBrush="#FFDEE2E6" BorderThickness="0,0,0,1">
+                <Grid>
+                    <TextBlock Text="👥 Users Management" FontSize="28" FontWeight="Bold" Foreground="#FF2D3E50" VerticalAlignment="Center"/>
+                    <TextBlock Text="Tuesday, November 18, 2025" FontSize="13" Foreground="#FF6C757D" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                </Grid>
+            </Border>
+
+            <!-- Content Area -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="30" MaxWidth="1800">
+
+                    <!-- KPI CARDS -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Card 1: Total Users -->
+                        <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="25" Margin="0,0,10,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.08"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="👥" FontSize="32" HorizontalAlignment="Left"/>
+                                <TextBlock x:Name="txtTotalUsers" Text="8" FontSize="28" FontWeight="Bold" Foreground="#FF2D3E50" Margin="0,10,0,0"/>
+                                <TextBlock Text="Total Users" FontSize="13" Foreground="#FF6C757D" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 2: Active Users -->
+                        <Border Grid.Column="1" Background="White" CornerRadius="12" Padding="25" Margin="5,0,5,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.08"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="✅" FontSize="32" HorizontalAlignment="Left"/>
+                                    <Border Background="#FFD4EDDA" CornerRadius="6" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <TextBlock Text="ACTIVE" FontSize="11" Foreground="#FF28A745" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                                <TextBlock x:Name="txtActiveUsers" Text="5" FontSize="28" FontWeight="Bold" Foreground="#FF28A745" Margin="0,10,0,0"/>
+                                <TextBlock Text="Active Users" FontSize="13" Foreground="#FF6C757D" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 3: Pending Users -->
+                        <Border Grid.Column="2" Background="White" CornerRadius="12" Padding="25" Margin="5,0,5,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.08"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="⏳" FontSize="32" HorizontalAlignment="Left"/>
+                                    <Border Background="#FFFEF3CD" CornerRadius="6" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <TextBlock Text="PENDING" FontSize="11" Foreground="#FFFFC107" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                                <TextBlock x:Name="txtPendingUsers" Text="2" FontSize="28" FontWeight="Bold" Foreground="#FFFFC107" Margin="0,10,0,0"/>
+                                <TextBlock Text="Pending Activation" FontSize="13" Foreground="#FF6C757D" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 4: Inactive Users -->
+                        <Border Grid.Column="3" Background="White" CornerRadius="12" Padding="25" Margin="10,0,0,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.08"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="🚫" FontSize="32" HorizontalAlignment="Left"/>
+                                    <Border Background="#FFF8D7DA" CornerRadius="6" Padding="8,4" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <TextBlock Text="BLOCKED" FontSize="11" Foreground="#FFDC3545" FontWeight="SemiBold"/>
+                                    </Border>
+                                </Grid>
+                                <TextBlock x:Name="txtInactiveUsers" Text="1" FontSize="28" FontWeight="Bold" Foreground="#FFDC3545" Margin="0,10,0,0"/>
+                                <TextBlock Text="Inactive Users" FontSize="13" Foreground="#FF6C757D" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- ACTION PANEL -->
+                    <Border Background="White" CornerRadius="12" Padding="25" Margin="0,0,0,20">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.08"/>
+                        </Border.Effect>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Search Box -->
+                            <Border Grid.Column="0" BorderBrush="#FFDEE2E6" BorderThickness="1" CornerRadius="8" Background="White" Height="42">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="🔍" FontSize="16" Foreground="#FF6C757D" 
+                                               VerticalAlignment="Center" Margin="15,0,10,0"/>
+                                    <TextBox x:Name="txtSearch" Grid.Column="1" 
+                                             BorderThickness="0" 
+                                             Background="Transparent"
+                                             VerticalAlignment="Center"
+                                             FontSize="14"
+                                             Foreground="#FF2D3E50"
+                                             Padding="0,0,15,0"
+                                             TextChanged="Search_TextChanged">
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="TextBox">
+                                                            <Border Background="{TemplateBinding Background}">
+                                                                <ScrollViewer x:Name="PART_ContentHost" />
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Add User Button -->
+                            <Button Grid.Column="1" Content="➕ Add New User" Height="42" Padding="30,0" Margin="15,0,0,0"
+                                    Background="#FF28A745" Foreground="White" BorderThickness="0"
+                                    FontSize="14" FontWeight="SemiBold" Cursor="Hand"
+                                    Click="AddNewUser_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FF218838"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- USERS TABLE -->
+                    <Border Background="White" CornerRadius="12" Padding="25" Margin="0,0,0,20">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.08"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="📋 All Users" FontSize="18" FontWeight="SemiBold" Foreground="#FF2D3E50" Margin="0,0,0,20"/>
+
+                            <StackPanel x:Name="usersPanel">
+                                <!-- Header -->
+                                <Border Background="#FFF8F9FA" CornerRadius="8,8,0,0" Padding="0,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1.2*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1.2*"/>
+                                            <ColumnDefinition Width="1.2*"/>
+                                            <ColumnDefinition Width="2*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="AVATAR" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="FULL NAME" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D"/>
+                                        <TextBlock Grid.Column="2" Text="USERNAME" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D"/>
+                                        <TextBlock Grid.Column="3" Text="ROLE" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="4" Text="ACCESS CODE" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="5" Text="STATUS" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="6" Text="LAST LOGIN" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="7" Text="CREATED" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="8" Text="ACTIONS" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                                <!-- Rows will be added dynamically -->
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

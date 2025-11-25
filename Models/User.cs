@@ -1,26 +1,40 @@
-﻿/*Do czego: Przechowuje dane użytkowników aplikacji
-Co robi:
-* Rejestruje użytkowników (login, hasło)
-* Przydziela role: Manager (zatwierdzanie), Operator (magazyn), Cashier (kasa)
-* Śledzi ostatnie logowanie
-* Aktywne/nieaktywne konta*/
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CycleDesk.Models
 {
+    [Table("Users")]
     public class User
     {
+        [Key]
         public int UserId { get; set; }
+
+        [Required]
+        [MaxLength(50)]
         public string Username { get; set; }
-        public string FullName { get; set; }
+
+        [Required]
+        [MaxLength(256)]
         public string PasswordHash { get; set; }
-        public string Role { get; set; } // Manager, Operator, Cashier
+
+        [Required]
+        [MaxLength(100)]
+        public string FirstName { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string LastName { get; set; }
+
+        [MaxLength(255)]
+        public string Email { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string Role { get; set; }
+
         public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? LastLoginAt { get; set; }
+
+        public DateTime CreatedDate { get; set; }
     }
 }

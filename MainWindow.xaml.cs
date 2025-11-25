@@ -2,9 +2,12 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Data.SqlClient;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using CycleDesk.Views;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace CycleDesk
 {
@@ -38,6 +41,49 @@ namespace CycleDesk
             registerStep2Control.BackToLoginClicked += BackToLogin;
 
             StartSplashScreen();
+            TestSimpleDatabaseConnection();
+        }
+
+        private async void TestSimpleDatabaseConnection()
+        {
+            string connectionString =
+                "Server=localhost\\SQLEXPRESS01;" +
+                "Database=CycleDesk;" +
+                "Trusted_Connection=True;" +
+                "TrustServerCertificate=True;";
+
+            try
+            {
+                using var connection = new SqlConnection(connectionString);
+                await connection.OpenAsync();
+
+                // Policz użytkowników
+                using var cmd = new SqlCommand("SELECT COUNT(*) FROM Users", connection);
+                int userCount = (int)await cmd.ExecuteScalarAsync();
+
+                // Policz produkty
+                using var cmd2 = new SqlCommand("SELECT COUNT(*) FROM Products", connection);
+                int productCount = (int)await cmd2.ExecuteScalarAsync();
+
+                MessageBox.Show(
+                    $"✅ POŁĄCZONO Z BAZĄ!\n\n" +
+                    $"👥 Użytkownicy: {userCount}\n" +
+                    $"📦 Produkty: {productCount}\n\n" +
+                    $"🎉 SQL połączenie działa!",
+                    "Sukces!",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"❌ BŁĄD:\n\n{ex.Message}",
+                    "Błąd połączenia",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
         }
 
         private async void StartSplashScreen()
@@ -48,10 +94,10 @@ namespace CycleDesk
             storyboard.Begin();
         }
 
-        
+
         private async void SwitchView(object newView)
         {
-            
+
             var fadeOut = new DoubleAnimation
             {
                 From = 1,
@@ -63,10 +109,10 @@ namespace CycleDesk
             ContentContainer.BeginAnimation(OpacityProperty, fadeOut);
             await Task.Delay(500);
 
-          
+
             ContentContainer.Content = newView;
 
-            
+
             var fadeIn = new DoubleAnimation
             {
                 From = 0,
@@ -208,5 +254,9 @@ namespace CycleDesk
             registerStep1Control.ClearCode();
             SwitchView(loginControl);
         }
+
+
+
+        
     }
 }
