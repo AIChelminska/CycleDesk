@@ -1,12 +1,13 @@
-﻿using System;
+﻿using CycleDesk.Data;
+using CycleDesk.Views;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
-using Microsoft.Data.SqlClient;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using CycleDesk.Views;
-using Microsoft.EntityFrameworkCore;
 
 
 namespace CycleDesk
@@ -47,7 +48,7 @@ namespace CycleDesk
         private async void TestSimpleDatabaseConnection()
         {
             string connectionString =
-                "Server=localhost\\SQLEXPRESS01;" +
+                "Server=localhost\\SQLEXPRESS;" +
                 "Database=CycleDesk;" +
                 "Trusted_Connection=True;" +
                 "TrustServerCertificate=True;";
@@ -124,37 +125,24 @@ namespace CycleDesk
             ContentContainer.BeginAnimation(OpacityProperty, fadeIn);
         }
 
-        private void LoginControl_LoginClicked(object? sender, EventArgs e)
+        private async void LoginControl_LoginClicked(object? sender, EventArgs e)
         {
             string username = loginControl.Username;
             string password = loginControl.Password;
 
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                MessageBox.Show("Podaj nazwę użytkownika!", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            using var context = new CycleDeskDbContext();
+            var user = await context.Users
+                .FirstOrDefaultAsync(u => u.Username == username && u.PasswordHash == password && u.IsActive);
 
-            if (string.IsNullOrWhiteSpace(password))
+            if (user != null)
             {
-                MessageBox.Show("Podaj hasło!", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // TODO: Sprawdź w bazie danych
-            // Na razie MOCK DATA
-            if (username == "admin" && password == "admin123")
-            {
-                // Otwórz Dashboard
                 MainDashboardWindow dashboard = new MainDashboardWindow(
-                    username: "admin",
-                    password: "admin123",
-                    fullName: "Admin User",
-                    role: "Supervisor"
+                    username: user.Username,
+                    password: password,
+                    fullName: user.FullName,
+                    role: user.Role
                 );
                 dashboard.Show();
-
-                // Zamknij okno logowania
                 this.Close();
             }
             else

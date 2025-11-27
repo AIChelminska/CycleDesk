@@ -10,7 +10,7 @@ namespace CycleDesk.Data
         public DbSet<AccessCode> AccessCodes { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
-        public DbSet<Product> Products { get; set; }
+        public DbSet<CycleDesk.Models.Product> Products { get; set; }
         public DbSet<Inventory> Inventory { get; set; }
         public DbSet<StockHistory> StockHistory { get; set; }
         public DbSet<Customer> Customers { get; set; }
@@ -36,53 +36,12 @@ namespace CycleDesk.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Konfiguracja jest w atrybutach [Table] i [Column] w modelach
-            // Dodatkowa konfiguracja jeśli potrzebna:
-
-            modelBuilder.Entity<User>()
-                .HasKey(u => u.UserId);
-
-            modelBuilder.Entity<Product>()
-                .HasKey(p => p.ProductId);
-
-            modelBuilder.Entity<Category>()
-                .HasKey(c => c.CategoryId);
-
-            modelBuilder.Entity<Supplier>()
-                .HasKey(s => s.SupplierId);
-
-            modelBuilder.Entity<Customer>()
-                .HasKey(c => c.CustomerId);
-
-            modelBuilder.Entity<Sale>()
-                .HasKey(s => s.SaleId);
-
-            modelBuilder.Entity<SaleItem>()
-                .HasKey(si => si.SaleItemId);
-
-            modelBuilder.Entity<Invoice>()
-                .HasKey(i => i.InvoiceId);
-
-            modelBuilder.Entity<GoodsReceipt>()
-                .HasKey(gr => gr.GoodsReceiptId);
-
-            modelBuilder.Entity<GoodsReceiptItem>()
-                .HasKey(gri => gri.GoodsReceiptItemId);
-
-            modelBuilder.Entity<Inventory>()
-                .HasKey(i => i.InventoryId);
-
-            modelBuilder.Entity<StockHistory>()
-                .HasKey(sh => sh.AdjustmentId);
-
-            modelBuilder.Entity<AccessCode>()
-                .HasKey(ac => ac.AccessCodeId);
-
-            modelBuilder.Entity<ApplicationSettings>()
-                .HasKey(a => a.SettingId);
-
-            modelBuilder.Entity<AuditLog>()
-                .HasKey(a => a.AuditId);
+            modelBuilder.Entity<CycleDesk.Models.Product>(entity =>
+            {
+                entity.ToTable("Products");
+                entity.HasKey(e => e.ProductId);
+                entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            });
         }
     }
 }
