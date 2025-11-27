@@ -724,5 +724,6 @@ namespace CycleDesk
         public decimal UnitPrice { get; set; }
         public string ImagePath { get; set; }
         public int StockQuantity { get; set; }
+        public object ProductId { get; internal set; }
     }
 }
