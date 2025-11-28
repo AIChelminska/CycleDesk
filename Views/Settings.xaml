@@ -386,7 +386,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <controls:SideMenuControl x:Name="sideMenu" Grid.Column="0"/>
+        <controls:SideMenuControl x:Name="sideMenu" DockPanel.Dock="Left" />
 
         <!-- MAIN CONTENT -->
         <Grid Grid.Column="1">

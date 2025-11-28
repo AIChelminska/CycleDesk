@@ -1,5 +1,4 @@
-﻿using CycleDesk.Views;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -25,7 +24,7 @@ namespace CycleDesk
         private ObservableCollection<CartItem> _cartItems;
 
         // Mock product database
-        private List<Product> _mockProducts;
+        private List<SaleProduct> _mockProducts;
 
         public NewSaleWindow(string username, string password, string fullName, string role)
         {
@@ -35,14 +34,15 @@ namespace CycleDesk
             _fullName = fullName;
             _role = role;
 
-            // Set user data in UI
-            lblUserFullName.Text = fullName;
-            lblUserRole.Text = role;
-            lblCashierName.Text = fullName;
+            // Inicjalizuj SideMenuControl
+            sideMenu.Initialize(fullName, role);
+            sideMenu.SetActiveMenu("Sales", "NewSale");
 
-            // Set Sales as active button
-            SetActiveButton(btnSales);
-            submenuSales.Visibility = Visibility.Visible;
+            // Podłącz eventy menu
+            ConnectMenuEvents();
+
+            // Set cashier name
+            lblCashierName.Text = fullName;
 
             // Initialize cart
             _cartItems = new ObservableCollection<CartItem>();
@@ -60,19 +60,122 @@ namespace CycleDesk
             txtSearchProduct.Focus();
         }
 
+        // ===== MENU EVENTS CONNECTION =====
+        private void ConnectMenuEvents()
+        {
+            sideMenu.DashboardClicked += (s, e) =>
+            {
+                new MainDashboardWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.ProductsClicked += (s, e) =>
+            {
+                new ProductsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.CategoriesClicked += (s, e) =>
+            {
+                new CategoriesWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.InventoryStatusClicked += (s, e) =>
+            {
+                new InventoryStatusWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.GoodsReceiptClicked += (s, e) =>
+            {
+                new GoodsReceiptWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SuppliersClicked += (s, e) =>
+            {
+                new SuppliersWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.NewSaleClicked += (s, e) =>
+            {
+                // Już jesteśmy na tej stronie - nic nie rób
+            };
+
+            sideMenu.SalesHistoryClicked += (s, e) =>
+            {
+                new SalesHistoryWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.InvoicesClicked += (s, e) =>
+            {
+                new InvoicesWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SalesReportsClicked += (s, e) =>
+            {
+                new SalesReportsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.InventoryReportsClicked += (s, e) =>
+            {
+                new InventoryReportsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.ProductsToOrderClicked += (s, e) =>
+            {
+                new ProductsToOrderWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.UsersClicked += (s, e) =>
+            {
+                new UsersWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SettingsClicked += (s, e) =>
+            {
+                new SettingsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.LogoutClicked += (s, e) => HandleLogout();
+        }
+
+        private void HandleLogout()
+        {
+            var result = MessageBox.Show("Are you sure you want to logout?",
+                                        "Confirm Logout",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                new MainWindow().Show();
+                Close();
+            }
+        }
+
         // ===== MOCK DATA =====
         private void InitializeMockProducts()
         {
-            _mockProducts = new List<Product>
+            _mockProducts = new List<SaleProduct>
             {
-                new Product { SKU = "BIKE-001", ProductName = "Mountain Bike Pro X", UnitPrice = 2499.00m, ImagePath = "/Images/bike1.jpg", StockQuantity = 5 },
-                new Product { SKU = "BIKE-002", ProductName = "City Bike Classic", UnitPrice = 1299.00m, ImagePath = "/Images/bike2.jpg", StockQuantity = 8 },
-                new Product { SKU = "TIRE-001", ProductName = "All-Terrain Tire 26\"", UnitPrice = 89.99m, ImagePath = "/Images/tire1.jpg", StockQuantity = 25 },
-                new Product { SKU = "TIRE-002", ProductName = "Road Bike Tire 28\"", UnitPrice = 79.99m, ImagePath = "/Images/tire2.jpg", StockQuantity = 30 },
-                new Product { SKU = "HELM-001", ProductName = "Safety Helmet Pro", UnitPrice = 149.00m, ImagePath = "/Images/helmet1.jpg", StockQuantity = 15 },
-                new Product { SKU = "LOCK-001", ProductName = "Heavy Duty Lock", UnitPrice = 59.99m, ImagePath = "/Images/lock1.jpg", StockQuantity = 20 },
-                new Product { SKU = "PUMP-001", ProductName = "Floor Pump Premium", UnitPrice = 45.00m, ImagePath = "/Images/pump1.jpg", StockQuantity = 12 },
-                new Product { SKU = "LIGHT-001", ProductName = "LED Light Set", UnitPrice = 34.99m, ImagePath = "/Images/light1.jpg", StockQuantity = 18 }
+                new SaleProduct { SKU = "BIKE-001", ProductName = "Mountain Bike Pro X", UnitPrice = 2499.00m, ImagePath = "/Images/bike1.jpg", StockQuantity = 5 },
+                new SaleProduct { SKU = "BIKE-002", ProductName = "City Bike Classic", UnitPrice = 1299.00m, ImagePath = "/Images/bike2.jpg", StockQuantity = 8 },
+                new SaleProduct { SKU = "TIRE-001", ProductName = "All-Terrain Tire 26\"", UnitPrice = 89.99m, ImagePath = "/Images/tire1.jpg", StockQuantity = 25 },
+                new SaleProduct { SKU = "TIRE-002", ProductName = "Road Bike Tire 28\"", UnitPrice = 79.99m, ImagePath = "/Images/tire2.jpg", StockQuantity = 30 },
+                new SaleProduct { SKU = "HELM-001", ProductName = "Safety Helmet Pro", UnitPrice = 149.00m, ImagePath = "/Images/helmet1.jpg", StockQuantity = 15 },
+                new SaleProduct { SKU = "LOCK-001", ProductName = "Heavy Duty Lock", UnitPrice = 59.99m, ImagePath = "/Images/lock1.jpg", StockQuantity = 20 },
+                new SaleProduct { SKU = "PUMP-001", ProductName = "Floor Pump Premium", UnitPrice = 45.00m, ImagePath = "/Images/pump1.jpg", StockQuantity = 12 },
+                new SaleProduct { SKU = "LIGHT-001", ProductName = "LED Light Set", UnitPrice = 34.99m, ImagePath = "/Images/light1.jpg", StockQuantity = 18 }
             };
         }
 
@@ -168,7 +271,7 @@ namespace CycleDesk
         }
 
         // ===== CART MANAGEMENT =====
-        private void AddProductToCart(Product product)
+        private void AddProductToCart(SaleProduct product)
         {
             // Check if product already in cart
             var existingItem = _cartItems.FirstOrDefault(item => item.SKU == product.SKU);
@@ -301,7 +404,7 @@ namespace CycleDesk
         // ===== PAYMENT METHOD =====
         private void PaymentMethod_Changed(object sender, RoutedEventArgs e)
         {
-            // Null check -ważne podczas inicjalizacji
+            // Null check - ważne podczas inicjalizacji
             if (cashPaymentSection == null || cardPaymentSection == null)
                 return;
 
@@ -520,170 +623,6 @@ namespace CycleDesk
             if (txtCity != null) txtCity.Text = "";
             if (txtPostalCode != null) txtPostalCode.Text = "";
         }
-
-        // ===== ACTIVE BUTTON MANAGEMENT =====
-        private void SetActiveButton(Button activeButton)
-        {
-            btnDashboard.Tag = null;
-            btnInventory.Tag = null;
-            btnSales.Tag = null;
-            btnReports.Tag = null;
-            btnAdministration.Tag = null;
-
-            btnDashboard.Background = Brushes.Transparent;
-            btnInventory.Background = Brushes.Transparent;
-            btnSales.Background = Brushes.Transparent;
-            btnReports.Background = Brushes.Transparent;
-            btnAdministration.Background = Brushes.Transparent;
-
-            activeButton.Tag = "Active";
-        }
-
-        private void ToggleSubmenu(StackPanel submenu)
-        {
-            if (submenu.Visibility == Visibility.Visible)
-            {
-                submenu.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            submenuInventory.Visibility = Visibility.Collapsed;
-            submenuSales.Visibility = Visibility.Collapsed;
-            submenuReports.Visibility = Visibility.Collapsed;
-            submenuAdministration.Visibility = Visibility.Collapsed;
-
-            submenu.Visibility = Visibility.Visible;
-        }
-
-        // ===== MENU NAVIGATION =====
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
-        {
-            MainDashboardWindow dashboard = new MainDashboardWindow(_username, _password, _fullName, _role);
-            dashboard.Show();
-            this.Close();
-        }
-
-        private void Inventory_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuInventory);
-            SetActiveButton(btnInventory);
-        }
-
-        private void Sales_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuSales);
-            SetActiveButton(btnSales);
-        }
-
-        private void Reports_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuReports);
-            SetActiveButton(btnReports);
-        }
-
-        private void Administration_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuAdministration);
-            SetActiveButton(btnAdministration);
-        }
-
-        // ===== SUBMENU NAVIGATION =====
-        private void Products_Click(object sender, RoutedEventArgs e)
-        {
-            ProductsWindow productsWindow = new ProductsWindow(_username, _password, _fullName, _role);
-            productsWindow.Show();
-            this.Close();
-        }
-
-        private void Categories_Click(object sender, RoutedEventArgs e)
-        {
-            CategoriesWindow categoriesWindow = new CategoriesWindow(_username, _password, _fullName, _role);
-            categoriesWindow.Show();
-            this.Close();
-        }
-
-        private void InventoryStatus_Click(object sender, RoutedEventArgs e)
-        {
-            InventoryStatusWindow inventoryStatusWindow = new InventoryStatusWindow(_username, _password, _fullName, _role);
-            inventoryStatusWindow.Show();
-            this.Close();
-        }
-
-        private void GoodsReceipt_Click(object sender, RoutedEventArgs e)
-        {
-            GoodsReceiptWindow goodsReceiptWindow = new GoodsReceiptWindow(_username, _password, _fullName, _role);
-            goodsReceiptWindow.Show();
-            this.Close();
-        }
-
-        private void Suppliers_Click(object sender, RoutedEventArgs e)
-        {
-            SuppliersWindow suppliersWindow = new SuppliersWindow(_username, _password, _fullName, _role);
-            suppliersWindow.Show();
-            this.Close();
-        }
-
-        // Empty method - we're already on this page
-        private void NewSale_Click(object sender, RoutedEventArgs e) { }
-
-        private void SalesHistory_Click(object sender, RoutedEventArgs e)
-        {
-            SalesHistoryWindow salesHistoryWindow = new SalesHistoryWindow(_username, _password, _fullName, _role);
-            salesHistoryWindow.Show();
-            this.Close();
-        }
-
-        private void Invoices_Click(object sender, RoutedEventArgs e)
-        {
-            InvoicesWindow invoicesWindow = new InvoicesWindow(_username, _password, _fullName, _role);
-            invoicesWindow.Show();
-            this.Close();
-        }
-
-        private void SalesReports_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Sales Reports view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void InventoryReports_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Inventory Reports view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void ProductsToOrder_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Products to Order view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Users_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Users view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Settings_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Settings view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Logout_Click(object sender, RoutedEventArgs e)
-        {
-            var result = MessageBox.Show("Are you sure you want to logout?",
-                                        "Confirm Logout",
-                                        MessageBoxButton.YesNo,
-                                        MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                MainWindow loginWindow = new MainWindow();
-                loginWindow.Show();
-                this.Close();
-            }
-        }
     }
 
     // ===== DATA MODELS =====
@@ -717,7 +656,7 @@ namespace CycleDesk
         }
     }
 
-    public class Product
+    public class SaleProduct
     {
         public string SKU { get; set; }
         public string ProductName { get; set; }

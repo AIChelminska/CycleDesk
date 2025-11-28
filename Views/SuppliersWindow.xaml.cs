@@ -22,55 +22,120 @@ namespace CycleDesk
             _fullName = fullName;
             _role = role;
 
-            // Set user data in UI
-            lblUserFullName.Text = fullName;
-            lblUserRole.Text = role;
+            // Inicjalizuj SideMenuControl
+            sideMenu.Initialize(fullName, role);
+            sideMenu.SetActiveMenu("Inventory", "Suppliers");
 
-            // Set Inventory as active button
-            SetActiveButton(btnInventory);
-
-            // Expand Inventory submenu
-            submenuInventory.Visibility = Visibility.Visible;
+            // Podłącz eventy menu
+            ConnectMenuEvents();
         }
 
-        // ===== ACTIVE BUTTON MANAGEMENT =====
-        private void SetActiveButton(Button activeButton)
+        // ===== MENU EVENTS CONNECTION =====
+        private void ConnectMenuEvents()
         {
-            btnDashboard.Tag = null;
-            btnInventory.Tag = null;
-            btnSales.Tag = null;
-            btnReports.Tag = null;
-            btnAdministration.Tag = null;
-
-            btnDashboard.Background = Brushes.Transparent;
-            btnInventory.Background = Brushes.Transparent;
-            btnSales.Background = Brushes.Transparent;
-            btnReports.Background = Brushes.Transparent;
-            btnAdministration.Background = Brushes.Transparent;
-
-            activeButton.Tag = "Active";
-        }
-
-        private void ToggleSubmenu(StackPanel submenu)
-        {
-            if (submenu.Visibility == Visibility.Visible)
+            sideMenu.DashboardClicked += (s, e) =>
             {
-                submenu.Visibility = Visibility.Collapsed;
-                return;
+                new MainDashboardWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.ProductsClicked += (s, e) =>
+            {
+                new ProductsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.CategoriesClicked += (s, e) =>
+            {
+                new CategoriesWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.InventoryStatusClicked += (s, e) =>
+            {
+                new InventoryStatusWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.GoodsReceiptClicked += (s, e) =>
+            {
+                new GoodsReceiptWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SuppliersClicked += (s, e) =>
+            {
+                // Już jesteśmy na tej stronie - nic nie rób
+            };
+
+            sideMenu.NewSaleClicked += (s, e) =>
+            {
+                new NewSaleWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SalesHistoryClicked += (s, e) =>
+            {
+                new SalesHistoryWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.InvoicesClicked += (s, e) =>
+            {
+                new InvoicesWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SalesReportsClicked += (s, e) =>
+            {
+                new SalesReportsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.InventoryReportsClicked += (s, e) =>
+            {
+                new InventoryReportsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.ProductsToOrderClicked += (s, e) =>
+            {
+                new ProductsToOrderWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.UsersClicked += (s, e) =>
+            {
+                new UsersWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.SettingsClicked += (s, e) =>
+            {
+                new SettingsWindow(_username, _password, _fullName, _role).Show();
+                Close();
+            };
+
+            sideMenu.LogoutClicked += (s, e) => HandleLogout();
+        }
+
+        private void HandleLogout()
+        {
+            var result = MessageBox.Show("Are you sure you want to logout?",
+                                        "Confirm Logout",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                new MainWindow().Show();
+                Close();
             }
-
-            submenuInventory.Visibility = Visibility.Collapsed;
-            submenuSales.Visibility = Visibility.Collapsed;
-            submenuReports.Visibility = Visibility.Collapsed;
-            submenuAdministration.Visibility = Visibility.Collapsed;
-
-            submenu.Visibility = Visibility.Visible;
         }
 
         // ===== SEARCH AND FILTER =====
         private void SearchTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            // FIXED: Changed SearchTextBox to txtSearch
             if (txtSearch.Text == "🔍 Search suppliers...")
             {
                 txtSearch.Text = "";
@@ -80,7 +145,6 @@ namespace CycleDesk
 
         private void SearchTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            // FIXED: Changed SearchTextBox to txtSearch
             if (string.IsNullOrWhiteSpace(txtSearch.Text))
             {
                 txtSearch.Text = "🔍 Search suppliers...";
@@ -128,7 +192,6 @@ namespace CycleDesk
             actionButtonsPopup.IsOpen = true;
         }
 
-        // FIXED: Added missing SupplierRow_MouseLeave method
         private void SupplierRow_MouseLeave(object sender, MouseEventArgs e)
         {
             Border row = sender as Border;
@@ -151,7 +214,6 @@ namespace CycleDesk
             }
         }
 
-        // FIXED: Added missing IsMouseOverPopup helper method
         private bool IsMouseOverPopup()
         {
             if (actionButtonsPopup.Child == null) return false;
@@ -184,7 +246,6 @@ namespace CycleDesk
             string supplierID = "Unknown";
             string supplierName = "Unknown";
 
-            // FIXED: Corrected logic to find TextBlocks inside Borders
             if (rowGrid != null)
             {
                 foreach (var child in rowGrid.Children)
@@ -227,7 +288,6 @@ namespace CycleDesk
             string supplierID = "Unknown";
             string supplierName = "Unknown";
 
-            // FIXED: Corrected logic to find TextBlocks inside Borders
             if (rowGrid != null)
             {
                 foreach (var child in rowGrid.Children)
@@ -377,133 +437,6 @@ namespace CycleDesk
 
             // Close modal
             modalOverlay.Visibility = Visibility.Collapsed;
-        }
-
-        // ===== MENU NAVIGATION =====
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
-        {
-            MainDashboardWindow dashboard = new MainDashboardWindow(_username, _password, _fullName, _role);
-            dashboard.Show();
-            this.Close();
-        }
-
-        private void Inventory_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuInventory);
-            SetActiveButton(btnInventory);
-        }
-
-        private void Sales_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuSales);
-            SetActiveButton(btnSales);
-        }
-
-        private void Reports_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuReports);
-            SetActiveButton(btnReports);
-        }
-
-        private void Administration_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleSubmenu(submenuAdministration);
-            SetActiveButton(btnAdministration);
-        }
-
-        // ===== SUBMENU NAVIGATION =====
-        private void Products_Click(object sender, RoutedEventArgs e)
-        {
-            ProductsWindow productsWindow = new ProductsWindow(_username, _password, _fullName, _role);
-            productsWindow.Show();
-            this.Close();
-        }
-
-        private void Categories_Click(object sender, RoutedEventArgs e)
-        {
-            CategoriesWindow categoriesWindow = new CategoriesWindow(_username, _password, _fullName, _role);
-            categoriesWindow.Show();
-            this.Close();
-        }
-
-        private void InventoryStatus_Click(object sender, RoutedEventArgs e)
-        {
-            InventoryStatusWindow inventoryStatusWindow = new InventoryStatusWindow(_username, _password, _fullName, _role);
-            inventoryStatusWindow.Show();
-            this.Close();
-        }
-
-        private void GoodsReceipt_Click(object sender, RoutedEventArgs e)
-        {
-            GoodsReceiptWindow goodsReceiptWindow = new GoodsReceiptWindow(_username, _password, _fullName, _role);
-            goodsReceiptWindow.Show();
-            this.Close();
-        }
-
-        // Empty method - we're already on this page
-        private void Suppliers_Click(object sender, RoutedEventArgs e) { }
-
-        private void NewSale_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("New Sale view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void SalesHistory_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Sales History view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Invoices_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Invoices view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void SalesReports_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Sales Reports view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void InventoryReports_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Inventory Reports view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void ProductsToOrder_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Products to Order view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Users_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Users view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Settings_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Settings view - coming soon!", "Info",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void Logout_Click(object sender, RoutedEventArgs e)
-        {
-            var result = MessageBox.Show("Are you sure you want to logout?",
-                                        "Confirm Logout",
-                                        MessageBoxButton.YesNo,
-                                        MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                MainWindow loginWindow = new MainWindow();
-                loginWindow.Show();
-                this.Close();
-            }
         }
     }
 }

@@ -10,7 +10,7 @@ namespace CycleDesk.Data
         public DbSet<AccessCode> AccessCodes { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
-        public DbSet<CycleDesk.Models.Product> Products { get; set; }
+        public DbSet<Product> Products { get; set; }
         public DbSet<Inventory> Inventory { get; set; }
         public DbSet<StockHistory> StockHistory { get; set; }
         public DbSet<Customer> Customers { get; set; }
@@ -36,7 +36,7 @@ namespace CycleDesk.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<CycleDesk.Models.Product>(entity =>
+            modelBuilder.Entity<Product>(entity =>
             {
                 entity.ToTable("Products");
                 entity.HasKey(e => e.ProductId);
