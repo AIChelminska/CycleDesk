@@ -1,4 +1,12 @@
-﻿using System;
+﻿using CycleDesk.Models;
+using CycleDesk.Services;
+using CycleDesk.Views;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -8,11 +16,18 @@ namespace CycleDesk
 {
     public partial class SuppliersWindow : Window
     {
+        // ===== FIELDS =====
         private string _username;
         private string _password;
         private string _fullName;
         private string _role;
-        private Border _currentlySelectedRow = null;
+
+        private SupplierService _supplierService;
+        private List<Supplier> _allSuppliers;
+        private ObservableCollection<SupplierDisplayDto> _displaySuppliers;
+
+        private bool _isEditMode = false;
+        private int _editingSupplierId = 0;
 
         public SuppliersWindow(string username, string password, string fullName, string role)
         {
@@ -22,12 +37,405 @@ namespace CycleDesk
             _fullName = fullName;
             _role = role;
 
-            // Inicjalizuj SideMenuControl
+            // Initialize service
+            _supplierService = new SupplierService();
+            _displaySuppliers = new ObservableCollection<SupplierDisplayDto>();
+
+            // Initialize SideMenuControl
             sideMenu.Initialize(fullName, role);
             sideMenu.SetActiveMenu("Inventory", "Suppliers");
 
-            // Podłącz eventy menu
+            // Connect menu events
             ConnectMenuEvents();
+
+            // Load data after window is loaded
+            this.Loaded += SuppliersWindow_Loaded;
+        }
+
+        private void SuppliersWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            LoadSuppliers();
+            LoadFilters();
+        }
+
+        // ===== DATA LOADING =====
+        private void LoadSuppliers()
+        {
+            try
+            {
+                _allSuppliers = _supplierService.GetAllSuppliers();
+
+                _displaySuppliers.Clear();
+                foreach (var supplier in _allSuppliers)
+                {
+                    _displaySuppliers.Add(SupplierDisplayDto.FromSupplier(supplier));
+                }
+
+                // Bind to ItemsControl
+                icSuppliers.ItemsSource = _displaySuppliers;
+
+                // Update total count
+                if (txtTotalCount != null)
+                {
+                    txtTotalCount.Text = $"Showing {_displaySuppliers.Count} of {_allSuppliers.Count} suppliers";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading suppliers: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void LoadFilters()
+        {
+            try
+            {
+                // Load countries to filter
+                var countries = _supplierService.GetUniqueCountries();
+
+                cmbCountry.Items.Clear();
+                cmbCountry.Items.Add(new ComboBoxItem { Content = "All Countries", IsSelected = true });
+                foreach (var country in countries)
+                {
+                    cmbCountry.Items.Add(new ComboBoxItem { Content = country });
+                }
+
+                // Status filter already has static items in XAML
+                cmbStatus.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading filters: {ex.Message}");
+            }
+        }
+
+        // ===== SEARCH AND FILTER =====
+        private void ApplyFilters()
+        {
+            try
+            {
+                string searchText = txtSearch.Text ?? "";
+
+                string statusFilter = "All Status";
+                if (cmbStatus.SelectedItem is ComboBoxItem statusItem)
+                {
+                    statusFilter = statusItem.Content?.ToString() ?? "All Status";
+                }
+
+                string countryFilter = "All Countries";
+                if (cmbCountry.SelectedItem is ComboBoxItem countryItem)
+                {
+                    countryFilter = countryItem.Content?.ToString() ?? "All Countries";
+                }
+
+                var filteredSuppliers = _supplierService.SearchSuppliers(searchText, statusFilter, countryFilter);
+
+                _displaySuppliers.Clear();
+                foreach (var supplier in filteredSuppliers)
+                {
+                    _displaySuppliers.Add(SupplierDisplayDto.FromSupplier(supplier));
+                }
+
+                // Update count
+                if (txtTotalCount != null)
+                {
+                    txtTotalCount.Text = $"Showing {_displaySuppliers.Count} of {_allSuppliers?.Count ?? 0} suppliers";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error filtering: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (IsLoaded)
+            {
+                ApplyFilters();
+            }
+        }
+
+        private void SearchTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            // Placeholder is handled by VisualBrush in XAML
+        }
+
+        private void SearchTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Placeholder is handled by VisualBrush in XAML
+        }
+
+        private void cmbStatus_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (IsLoaded) ApplyFilters();
+        }
+
+        private void cmbCountry_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (IsLoaded) ApplyFilters();
+        }
+
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            txtSearch.Text = "";
+            cmbStatus.SelectedIndex = 0;
+            cmbCountry.SelectedIndex = 0;
+
+            LoadSuppliers();
+            LoadFilters();
+
+            MessageBox.Show("Data has been refreshed.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // ===== EXPORT CSV =====
+        private void ExportCSV_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "CSV files (*.csv)|*.csv",
+                    FileName = $"Suppliers_Export_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("ID,Supplier Name,Contact Person,Phone,Email,Address,City,Postal Code,Country,Tax Number,Status,Created Date");
+
+                    foreach (var supplier in _displaySuppliers)
+                    {
+                        sb.AppendLine($"\"{supplier.SupplierCode}\",\"{supplier.SupplierName}\",\"{supplier.ContactPerson}\"," +
+                                     $"\"{supplier.Phone}\",\"{supplier.Email}\",\"{supplier.Address}\"," +
+                                     $"\"{supplier.City}\",\"{supplier.PostalCode}\",\"{supplier.Country}\"," +
+                                     $"\"{supplier.TaxNumber}\"," +
+                                     $"\"{(supplier.IsActive ? "Active" : "Inactive")}\",\"{supplier.CreatedDate:yyyy-MM-dd}\"");
+                    }
+
+                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                    MessageBox.Show($"Exported {_displaySuppliers.Count} suppliers to CSV.", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error exporting: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ===== ROW ACTIONS =====
+        private void EditSupplier_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var supplier = button?.DataContext as SupplierDisplayDto;
+
+            if (supplier != null)
+            {
+                OpenEditModal(supplier);
+            }
+        }
+
+        private void DeleteSupplier_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var supplier = button?.DataContext as SupplierDisplayDto;
+
+            if (supplier != null)
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to deactivate this supplier?\n\n{supplier.SupplierCode} - {supplier.SupplierName}\n\nThe supplier will be marked as inactive.",
+                    "Confirm Deactivation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning
+                );
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (_supplierService.DeleteSupplier(supplier.SupplierId))
+                    {
+                        LoadSuppliers();
+                        MessageBox.Show("Supplier has been deactivated.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error deactivating supplier.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
+        // ===== MODAL MANAGEMENT =====
+        private void OpenAddSupplierModal_Click(object sender, RoutedEventArgs e)
+        {
+            _isEditMode = false;
+            _editingSupplierId = 0;
+
+            // Reset all form fields
+            modalTitle.Text = "Add New Supplier";
+            btnSaveSupplier.Content = "Save Supplier";
+
+            modalTxtSupplierName.Clear();
+            modalTxtContactPerson.Clear();
+            modalTxtPhone.Clear();
+            modalTxtEmail.Clear();
+            modalTxtAddress.Clear();
+            modalTxtCity.Clear();
+            modalTxtPostalCode.Clear();
+            modalTxtTaxID.Clear();
+            modalCmbCountry.SelectedIndex = 0;
+            modalCmbStatus.SelectedIndex = 0;
+            modalTxtNotes.Clear();
+
+            // Show modal
+            modalOverlay.Visibility = Visibility.Visible;
+            modalTxtSupplierName.Focus();
+        }
+
+        private void OpenEditModal(SupplierDisplayDto supplier)
+        {
+            _isEditMode = true;
+            _editingSupplierId = supplier.SupplierId;
+
+            // Set modal title
+            modalTitle.Text = "Edit Supplier";
+            btnSaveSupplier.Content = "Update Supplier";
+
+            // Fill form with supplier data
+            modalTxtSupplierName.Text = supplier.SupplierName;
+            modalTxtContactPerson.Text = supplier.ContactPerson;
+            modalTxtPhone.Text = supplier.Phone;
+            modalTxtEmail.Text = supplier.Email;
+            modalTxtAddress.Text = supplier.Address;
+            modalTxtCity.Text = supplier.City;
+            modalTxtPostalCode.Text = supplier.PostalCode;
+            modalTxtTaxID.Text = supplier.TaxNumber;
+            modalTxtNotes.Text = supplier.Notes;
+
+            // Set country
+            for (int i = 0; i < modalCmbCountry.Items.Count; i++)
+            {
+                var item = modalCmbCountry.Items[i] as ComboBoxItem;
+                if (item?.Content?.ToString() == supplier.Country)
+                {
+                    modalCmbCountry.SelectedIndex = i;
+                    break;
+                }
+            }
+
+            // Set status
+            modalCmbStatus.SelectedIndex = supplier.IsActive ? 0 : 1;
+
+            // Show modal
+            modalOverlay.Visibility = Visibility.Visible;
+            modalTxtSupplierName.Focus();
+        }
+
+        private void CloseModal_Click(object sender, RoutedEventArgs e)
+        {
+            modalOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void CancelModal_Click(object sender, RoutedEventArgs e)
+        {
+            modalOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void SaveSupplier_Click(object sender, RoutedEventArgs e)
+        {
+            // Validation
+            if (string.IsNullOrWhiteSpace(modalTxtSupplierName.Text))
+            {
+                MessageBox.Show("Please enter supplier name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                modalTxtSupplierName.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(modalTxtContactPerson.Text))
+            {
+                MessageBox.Show("Please enter contact person name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                modalTxtContactPerson.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(modalTxtPhone.Text))
+            {
+                MessageBox.Show("Please enter phone number.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                modalTxtPhone.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(modalTxtEmail.Text))
+            {
+                MessageBox.Show("Please enter email address.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                modalTxtEmail.Focus();
+                return;
+            }
+
+            if (!modalTxtEmail.Text.Contains("@") || !modalTxtEmail.Text.Contains("."))
+            {
+                MessageBox.Show("Please enter a valid email address.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                modalTxtEmail.Focus();
+                return;
+            }
+
+            // Check for duplicate Tax Number
+            if (!string.IsNullOrWhiteSpace(modalTxtTaxID.Text))
+            {
+                if (_supplierService.TaxNumberExists(modalTxtTaxID.Text, _isEditMode ? _editingSupplierId : null))
+                {
+                    MessageBox.Show("A supplier with this Tax Number already exists.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    modalTxtTaxID.Focus();
+                    return;
+                }
+            }
+
+            // Get selected values
+            string country = (modalCmbCountry.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Poland";
+            bool isActive = modalCmbStatus.SelectedIndex == 0; // 0 = Active, 1 = Inactive
+
+            // Create supplier object
+            var supplier = new Supplier
+            {
+                SupplierId = _editingSupplierId,
+                SupplierName = modalTxtSupplierName.Text.Trim(),
+                ContactPerson = modalTxtContactPerson.Text.Trim(),
+                Phone = modalTxtPhone.Text.Trim(),
+                Email = modalTxtEmail.Text.Trim(),
+                Address = modalTxtAddress.Text.Trim(),
+                City = modalTxtCity.Text.Trim(),
+                PostalCode = modalTxtPostalCode.Text.Trim(),
+                Country = country,
+                TaxNumber = modalTxtTaxID.Text.Trim(),
+                Notes = modalTxtNotes.Text.Trim(),
+                IsActive = isActive
+            };
+
+            bool success;
+            if (_isEditMode)
+            {
+                success = _supplierService.UpdateSupplier(supplier);
+            }
+            else
+            {
+                success = _supplierService.AddSupplier(supplier);
+            }
+
+            if (success)
+            {
+                modalOverlay.Visibility = Visibility.Collapsed;
+                LoadSuppliers();
+                LoadFilters();
+
+                string message = _isEditMode
+                    ? $"Supplier '{supplier.SupplierName}' has been updated successfully!"
+                    : $"Supplier '{supplier.SupplierName}' has been added successfully!";
+
+                MessageBox.Show(message, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Error saving supplier. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         // ===== MENU EVENTS CONNECTION =====
@@ -65,7 +473,7 @@ namespace CycleDesk
 
             sideMenu.SuppliersClicked += (s, e) =>
             {
-                // Już jesteśmy na tej stronie - nic nie rób
+                // Already on this page
             };
 
             sideMenu.NewSaleClicked += (s, e) =>
@@ -131,312 +539,6 @@ namespace CycleDesk
                 new MainWindow().Show();
                 Close();
             }
-        }
-
-        // ===== SEARCH AND FILTER =====
-        private void SearchTextBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (txtSearch.Text == "🔍 Search suppliers...")
-            {
-                txtSearch.Text = "";
-                txtSearch.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF212529"));
-            }
-        }
-
-        private void SearchTextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtSearch.Text))
-            {
-                txtSearch.Text = "🔍 Search suppliers...";
-                txtSearch.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D"));
-            }
-        }
-
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Data has been refreshed.",
-                          "Information",
-                          MessageBoxButton.OK,
-                          MessageBoxImage.Information);
-        }
-
-        private void ExportCSV_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Export to CSV will be available soon.",
-                          "Information",
-                          MessageBoxButton.OK,
-                          MessageBoxImage.Information);
-        }
-
-        // ===== CLICKABLE ROW LOGIC =====
-        private void SupplierRow_Click(object sender, MouseButtonEventArgs e)
-        {
-            Border clickedRow = sender as Border;
-            if (clickedRow == null) return;
-
-            // Reset previous highlight
-            if (_currentlySelectedRow != null && _currentlySelectedRow != clickedRow)
-            {
-                _currentlySelectedRow.Background = new SolidColorBrush(Colors.White);
-            }
-
-            // Highlight new row
-            clickedRow.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8F9FA"));
-            _currentlySelectedRow = clickedRow;
-
-            // Show popup with buttons near cursor
-            actionButtonsPopup.PlacementTarget = clickedRow;
-            actionButtonsPopup.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
-            actionButtonsPopup.HorizontalOffset = 10;
-            actionButtonsPopup.VerticalOffset = 5;
-            actionButtonsPopup.IsOpen = true;
-        }
-
-        private void SupplierRow_MouseLeave(object sender, MouseEventArgs e)
-        {
-            Border row = sender as Border;
-            if (row == null) return;
-
-            // If popup is open and mouse is NOT over popup - close
-            if (actionButtonsPopup.IsOpen)
-            {
-                if (!IsMouseOverPopup())
-                {
-                    actionButtonsPopup.IsOpen = false;
-
-                    // Reset highlight
-                    if (_currentlySelectedRow != null)
-                    {
-                        _currentlySelectedRow.Background = new SolidColorBrush(Colors.White);
-                        _currentlySelectedRow = null;
-                    }
-                }
-            }
-        }
-
-        private bool IsMouseOverPopup()
-        {
-            if (actionButtonsPopup.Child == null) return false;
-
-            Point mousePos = Mouse.GetPosition(actionButtonsPopup.Child as UIElement);
-
-            if (actionButtonsPopup.Child is FrameworkElement element)
-            {
-                return mousePos.X >= 0 && mousePos.X <= element.ActualWidth &&
-                       mousePos.Y >= 0 && mousePos.Y <= element.ActualHeight;
-            }
-
-            return false;
-        }
-
-        private void ActionButtonsPopup_Closed(object sender, EventArgs e)
-        {
-            if (_currentlySelectedRow != null)
-            {
-                _currentlySelectedRow.Background = new SolidColorBrush(Colors.White);
-                _currentlySelectedRow = null;
-            }
-        }
-
-        private void EditSupplier_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentlySelectedRow == null) return;
-
-            Grid rowGrid = _currentlySelectedRow.Child as Grid;
-            string supplierID = "Unknown";
-            string supplierName = "Unknown";
-
-            if (rowGrid != null)
-            {
-                foreach (var child in rowGrid.Children)
-                {
-                    if (child is Border border)
-                    {
-                        int column = Grid.GetColumn(border);
-
-                        // Find TextBlocks inside each Border
-                        foreach (var borderChild in LogicalTreeHelper.GetChildren(border))
-                        {
-                            if (borderChild is TextBlock textBlock)
-                            {
-                                if (column == 0)
-                                {
-                                    supplierID = textBlock.Text;
-                                }
-                                else if (column == 1)
-                                {
-                                    supplierName = textBlock.Text;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            MessageBox.Show($"Edit supplier:\n\n{supplierID} - {supplierName}\n\nEdit functionality will be implemented soon.",
-                           "Edit Supplier",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
-            actionButtonsPopup.IsOpen = false;
-        }
-
-        private void DeleteSupplier_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentlySelectedRow == null) return;
-
-            Grid rowGrid = _currentlySelectedRow.Child as Grid;
-            string supplierID = "Unknown";
-            string supplierName = "Unknown";
-
-            if (rowGrid != null)
-            {
-                foreach (var child in rowGrid.Children)
-                {
-                    if (child is Border border)
-                    {
-                        int column = Grid.GetColumn(border);
-
-                        // Find TextBlocks inside each Border
-                        foreach (var borderChild in LogicalTreeHelper.GetChildren(border))
-                        {
-                            if (borderChild is TextBlock textBlock)
-                            {
-                                if (column == 0)
-                                {
-                                    supplierID = textBlock.Text;
-                                }
-                                else if (column == 1)
-                                {
-                                    supplierName = textBlock.Text;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            var result = MessageBox.Show(
-                $"Are you sure you want to delete this supplier?\n\n{supplierID} - {supplierName}\n\nThis action cannot be undone.",
-                "Confirm Delete",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning
-            );
-
-            if (result == MessageBoxResult.Yes)
-            {
-                MessageBox.Show($"Supplier {supplierID} deleted successfully!",
-                               "Success",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Information);
-                actionButtonsPopup.IsOpen = false;
-            }
-        }
-
-        // ===== MODAL MANAGEMENT =====
-        private void OpenAddSupplierModal_Click(object sender, RoutedEventArgs e)
-        {
-            // Reset all form fields
-            modalTxtSupplierName.Clear();
-            modalTxtContactPerson.Clear();
-            modalTxtPhone.Clear();
-            modalTxtEmail.Clear();
-            modalTxtAddress.Clear();
-            modalTxtCity.Clear();
-            modalTxtPostalCode.Clear();
-            modalTxtTaxID.Clear();
-            modalCmbCountry.SelectedIndex = 0; // Poland
-            modalCmbStatus.SelectedIndex = 0; // Active
-            modalTxtNotes.Clear();
-
-            // Show modal
-            modalOverlay.Visibility = Visibility.Visible;
-            modalTxtSupplierName.Focus();
-        }
-
-        private void CloseModal_Click(object sender, RoutedEventArgs e)
-        {
-            modalOverlay.Visibility = Visibility.Collapsed;
-        }
-
-        private void CancelModal_Click(object sender, RoutedEventArgs e)
-        {
-            modalOverlay.Visibility = Visibility.Collapsed;
-        }
-
-        private void SaveSupplier_Click(object sender, RoutedEventArgs e)
-        {
-            // Validate required fields
-            if (string.IsNullOrWhiteSpace(modalTxtSupplierName.Text))
-            {
-                MessageBox.Show("Please enter supplier name.",
-                               "Validation Error",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Warning);
-                modalTxtSupplierName.Focus();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(modalTxtContactPerson.Text))
-            {
-                MessageBox.Show("Please enter contact person name.",
-                               "Validation Error",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Warning);
-                modalTxtContactPerson.Focus();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(modalTxtPhone.Text))
-            {
-                MessageBox.Show("Please enter phone number.",
-                               "Validation Error",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Warning);
-                modalTxtPhone.Focus();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(modalTxtEmail.Text))
-            {
-                MessageBox.Show("Please enter email address.",
-                               "Validation Error",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Warning);
-                modalTxtEmail.Focus();
-                return;
-            }
-
-            // Basic email validation
-            if (!modalTxtEmail.Text.Contains("@"))
-            {
-                MessageBox.Show("Please enter a valid email address.",
-                               "Validation Error",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Warning);
-                modalTxtEmail.Focus();
-                return;
-            }
-
-            // Get selected values
-            ComboBoxItem selectedStatus = modalCmbStatus.SelectedItem as ComboBoxItem;
-            string status = selectedStatus?.Content?.ToString() ?? "Active";
-
-            ComboBoxItem selectedCountry = modalCmbCountry.SelectedItem as ComboBoxItem;
-            string country = selectedCountry?.Content?.ToString() ?? "Poland";
-
-            // TODO: Save to database
-            MessageBox.Show($"Supplier '{modalTxtSupplierName.Text}' has been added successfully!\n\n" +
-                           $"Contact Person: {modalTxtContactPerson.Text}\n" +
-                           $"Phone: {modalTxtPhone.Text}\n" +
-                           $"Email: {modalTxtEmail.Text}\n" +
-                           $"Country: {country}\n" +
-                           $"Status: {status}",
-                           "Success",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
-
-            // Close modal
-            modalOverlay.Visibility = Visibility.Collapsed;
         }
     }
 }
