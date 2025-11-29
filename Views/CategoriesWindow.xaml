@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Window x:Class="CycleDesk.CategoriesWindow"
+﻿<Window x:Class="CycleDesk.CategoriesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:CycleDesk.Controls"
@@ -42,16 +41,10 @@
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <ContentPresenter Grid.Column="0"
-                                                        Margin="15,0,0,0"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Left"/>
-                                                <TextBlock Grid.Column="1"
-                                                 Text="▼"
-                                                 FontSize="10"
-                                                 Foreground="#FF6C757D"
-                                                 Margin="0,0,15,0"
-                                                 VerticalAlignment="Center"/>
+                                                <ContentPresenter Grid.Column="0" Margin="15,0,0,0"
+                                                        VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                                <TextBlock Grid.Column="1" Text="▼" FontSize="10"
+                                                         Foreground="#FF6C757D" Margin="0,0,15,0" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Border>
                                     </ControlTemplate>
@@ -61,23 +54,14 @@
                             <ContentPresenter x:Name="ContentSite"
                                     Content="{TemplateBinding SelectionBoxItem}"
                                     ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                    Margin="15,0,30,0"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Left"
-                                    IsHitTestVisible="False"/>
+                                    Margin="15,0,30,0" VerticalAlignment="Center"
+                                    HorizontalAlignment="Left" IsHitTestVisible="False"/>
 
-                            <Popup x:Name="PART_Popup"
-                          Placement="Bottom"
-                          IsOpen="{TemplateBinding IsDropDownOpen}"
-                          AllowsTransparency="True"
-                          Focusable="False"
-                          PopupAnimation="Slide">
-                                <Border Background="White"
-                               BorderBrush="#FFDEE2E6"
-                               BorderThickness="1"
-                               CornerRadius="8"
-                               Margin="0,5,0,0"
-                               MinWidth="{TemplateBinding ActualWidth}">
+                            <Popup x:Name="PART_Popup" Placement="Bottom"
+                                  IsOpen="{TemplateBinding IsDropDownOpen}"
+                                  AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Border Background="White" BorderBrush="#FFDEE2E6" BorderThickness="1"
+                                       CornerRadius="8" Margin="0,5,0,0" MinWidth="{TemplateBinding ActualWidth}">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.15"/>
                                     </Border.Effect>
@@ -91,114 +75,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Menu Button Style -->
-        <Style x:Key="MenuButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#FFADB5BD"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="20,15"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Grid>
-
-                            <!-- Warstwa podstawowa -->
-                            <Border Background="Transparent" CornerRadius="0"/>
-
-                            <!-- HOVER GRADIENT -->
-                            <Grid x:Name="hoverLayer" Opacity="0">
-                                <!-- Biały pasek z lewej -->
-                                <Border Width="3"
-                                   HorizontalAlignment="Left"
-                                   Background="White"/>
-
-                                <!-- Gradient -->
-                                <Border Margin="3,0,0,0">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                            <GradientStop Color="#33FFFFFF" Offset="0"/>
-                                            <GradientStop Color="#03FFFFFF" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                </Border>
-                            </Grid>
-
-                            <!-- ACTIVE STATE (taki sam gradient!) -->
-                            <Grid x:Name="activeLayer" Opacity="0">
-                                <!-- Biały pasek z lewej -->
-                                <Border Width="3"
-                                   HorizontalAlignment="Left"
-                                   Background="White"/>
-
-                                <!-- Gradient -->
-                                <Border Margin="3,0,0,0">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                            <GradientStop Color="#33FFFFFF" Offset="0"/>
-                                            <GradientStop Color="#03FFFFFF" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                </Border>
-                            </Grid>
-
-                            <!-- Zawartość -->
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <ControlTemplate.Triggers>
-                            <!-- AKTYWNY PRZYCISK -->
-                            <Trigger Property="Tag" Value="Active">
-                                <Setter TargetName="activeLayer" Property="Opacity" Value="1"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-
-                            <!-- HOVER (tylko dla nieaktywnych) -->
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                    <Condition Property="Tag" Value="{x:Null}"/>
-                                </MultiTrigger.Conditions>
-                                <MultiTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="hoverLayer"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         From="0" To="1"
-                                                         Duration="0:0:0.25">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </MultiTrigger.EnterActions>
-                                <MultiTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="hoverLayer"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         From="1" To="0"
-                                                         Duration="0:0:0.25">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseOut"/>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </MultiTrigger.ExitActions>
-                                <Setter Property="Foreground" Value="White"/>
-                            </MultiTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <!-- ComboBoxItem Style -->
         <Style TargetType="ComboBoxItem">
@@ -208,8 +84,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
-                        <Border Background="{TemplateBinding Background}"
-                               Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -234,7 +109,7 @@
         </Grid.ColumnDefinitions>
 
         <controls:SideMenuControl x:Name="sideMenu" DockPanel.Dock="Left" />
-        
+
         <!-- GŁÓWNA ZAWARTOŚĆ -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -243,43 +118,30 @@
             </Grid.RowDefinitions>
 
             <!-- Górny bar -->
-            <Border Grid.Row="0" 
-                   Background="White" 
-                   BorderBrush="#FFE0E0E0" 
-                   BorderThickness="0,0,0,1"
-                   Padding="30,0">
+            <Border Grid.Row="0" Background="White" BorderBrush="#FFE0E0E0" 
+                   BorderThickness="0,0,0,1" Padding="30,0">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="📋" FontSize="32" Margin="0,0,15,0"/>
-                        <TextBlock Text="Categories"
-                                  FontSize="28"
-                                  FontWeight="Bold"
-                                  Foreground="#FF2D3E50"
-                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Categories" FontSize="28" FontWeight="Bold"
+                                  Foreground="#FF2D3E50" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="txtCategoryCount" Text="(0 categories)" FontSize="14"
+                                  Foreground="#FF6C757D" VerticalAlignment="Center" Margin="15,0,0,0"/>
                     </StackPanel>
 
-                    <Button Content="➕ Add New Category"
-       Height="45"
-       Padding="25,0"
-       Background="#FF2D3E50"
-       Foreground="White"
-       BorderThickness="0"
-       FontWeight="SemiBold"
-       FontSize="14"
-       Cursor="Hand"
-       HorizontalAlignment="Right"
-       VerticalAlignment="Center"
-       Click="OpenAddCategoryModal_Click">
+                    <Button Content="➕ Add New Category" Height="45" Padding="25,0"
+                           Background="#FF2D3E50" Foreground="White" BorderThickness="0"
+                           FontWeight="SemiBold" FontSize="14" Cursor="Hand"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Click="OpenAddCategoryModal_Click">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
                                             <Border Background="{TemplateBinding Background}"
-                               CornerRadius="10"
-                               Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
+                                                   CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </ControlTemplate>
                                     </Setter.Value>
@@ -299,23 +161,15 @@
             </Border>
 
             <!-- Content -->
-            <ScrollViewer Grid.Row="1" 
-             VerticalScrollBarVisibility="Auto"
-             Padding="30">
-                <Border Background="White"
-           CornerRadius="15"
-           Padding="30"
-                    MaxWidth="1100">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30">
+                <Border Background="White" CornerRadius="15" Padding="0" MaxWidth="1100">
                     <Border.Effect>
-                        <DropShadowEffect BlurRadius="15" 
-                            ShadowDepth="0" 
-                            Opacity="0.1" 
-                            Color="Black"/>
+                        <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.1" Color="Black"/>
                     </Border.Effect>
 
                     <StackPanel>
                         <!-- Header Row -->
-                        <Border Background="#FF2D3E50" CornerRadius="15,15,0,0" Margin="0,0,0,0">
+                        <Border Background="#FF2D3E50" CornerRadius="15,15,0,0">
                             <Grid Height="55" Margin="20,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*"/>
@@ -324,29 +178,18 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Border Grid.Column="0" Padding="0,0,15,0">
-                                    <TextBlock Text="Category Name" 
-                                               FontSize="14" 
-                                               FontWeight="SemiBold"
-                                               Foreground="white" 
-                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Category Name" FontSize="14" FontWeight="SemiBold"
+                                              Foreground="White" VerticalAlignment="Center"/>
                                 </Border>
 
                                 <Border Grid.Column="1" Padding="15,0">
-                                    <TextBlock Text="Products" 
-                                               FontSize="14" 
-                                               FontWeight="SemiBold"
-                                               Foreground="White" 
-                                               VerticalAlignment="Center" 
-                                               TextAlignment="Center"/>
+                                    <TextBlock Text="Products" FontSize="14" FontWeight="SemiBold"
+                                              Foreground="White" VerticalAlignment="Center" TextAlignment="Center"/>
                                 </Border>
 
                                 <Border Grid.Column="2" Padding="15,0">
-                                    <TextBlock Text="Status" 
-                                               FontSize="14" 
-                                               FontWeight="SemiBold"
-                                               Foreground="white" 
-                                               VerticalAlignment="Center" 
-                                               TextAlignment="Center"/>
+                                    <TextBlock Text="Status" FontSize="14" FontWeight="SemiBold"
+                                              Foreground="White" VerticalAlignment="Center" TextAlignment="Center"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -354,247 +197,19 @@
                         <!-- Divider -->
                         <Rectangle Fill="#FFDEE2E6" Height="1"/>
 
-                        <!-- Categories List -->
-                        <Border Margin="20">
-                            <StackPanel>
-                                <!-- BIKES Category -->
-                                <Grid Tag="Bikes" Cursor="Hand" MouseLeftButtonDown="ToggleCategory_Click">
-                                    <Border Background="White" Padding="0,15">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="0,0,15,0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock x:Name="expandBikes" Text="▶" FontSize="12" Foreground="#FF6C757D" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="Bikes" FontSize="14" Foreground="#FF2D3E50" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="45" FontSize="13" Foreground="#FF2D3E50" VerticalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="10" Height="10" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
-
-                                <!-- Bikes Subcategories -->
-                                <StackPanel x:Name="subcategoriesBikes" Visibility="Collapsed" Margin="30,5,0,10">
-                                    <Border Background="#FFF8F9FA" Margin="0,0,0,2">
-                                        <Grid Height="45">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="15,0">
-                                                <TextBlock Text="Mountain Bikes" FontSize="13" Foreground="#FF495057" VerticalAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="15" FontSize="12" Foreground="#FF495057" VerticalAlignment="Center" TextAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="8" Height="8" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-
-                                    <Border Background="#FFF8F9FA" Margin="0,0,0,2">
-                                        <Grid Height="45">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="15,0">
-                                                <TextBlock Text="Road Bikes" FontSize="13" Foreground="#FF495057" VerticalAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="20" FontSize="12" Foreground="#FF495057" VerticalAlignment="Center" TextAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="8" Height="8" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-
-                                    <Border Background="#FFF8F9FA">
-                                        <Grid Height="45">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="15,0">
-                                                <TextBlock Text="Electric Bikes" FontSize="13" Foreground="#FF495057" VerticalAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="10" FontSize="12" Foreground="#FF495057" VerticalAlignment="Center" TextAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="8" Height="8" Fill="#FFFFC107" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- Divider between categories -->
-                                <Rectangle Fill="#FFDEE2E6" Height="1" Margin="0,10"/>
-
-                                <!-- TIRES Category -->
-                                <Grid Tag="Tires" Cursor="Hand" MouseLeftButtonDown="ToggleCategory_Click">
-                                    <Border Background="White" Padding="0,15">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="0,0,15,0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock x:Name="expandTires" Text="▶" FontSize="12" Foreground="#FF6C757D" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="Tires" FontSize="14" Foreground="#FF2D3E50" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="28" FontSize="13" Foreground="#FF2D3E50" VerticalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="10" Height="10" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
-
-                                <!-- Tires Subcategories -->
-                                <StackPanel x:Name="subcategoriesTires" Visibility="Collapsed" Margin="30,5,0,10">
-                                    <Border Background="#FFF8F9FA" Margin="0,0,0,2">
-                                        <Grid Height="45">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="15,0">
-                                                <TextBlock Text="Mountain Bike Tires" FontSize="13" Foreground="#FF495057" VerticalAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="12" FontSize="12" Foreground="#FF495057" VerticalAlignment="Center" TextAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="8" Height="8" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-
-                                    <Border Background="#FFF8F9FA">
-                                        <Grid Height="45">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Padding="15,0">
-                                                <TextBlock Text="Road Bike Tires" FontSize="13" Foreground="#FF495057" VerticalAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="1" Padding="15,0">
-                                                <TextBlock Text="16" FontSize="12" Foreground="#FF495057" VerticalAlignment="Center" TextAlignment="Center"/>
-                                            </Border>
-
-                                            <Border Grid.Column="2" Padding="15,0">
-                                                <Ellipse Width="8" Height="8" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
-
-                                <!-- Divider -->
-                                <Rectangle Fill="#FFDEE2E6" Height="1" Margin="0,10"/>
-
-                                <!-- CHAINS Category -->
-                                <Border Background="White">
-                                    <Grid Height="55">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <Border Grid.Column="0" Padding="20,0">
-                                            <TextBlock Text="Chains" FontSize="14" Foreground="#FF2D3E50" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                        </Border>
-
-                                        <Border Grid.Column="1" Padding="15,0">
-                                            <TextBlock Text="12" FontSize="13" Foreground="#FF2D3E50" VerticalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
-                                        </Border>
-
-                                        <Border Grid.Column="2" Padding="15,0">
-                                            <Ellipse Width="10" Height="10" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- BRAKES Category -->
-                                <Border Background="White">
-                                    <Grid Height="55">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <Border Grid.Column="0" Padding="20,0">
-                                            <TextBlock Text="Brakes" FontSize="14" Foreground="#FF2D3E50" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                        </Border>
-
-                                        <Border Grid.Column="1" Padding="15,0">
-                                            <TextBlock Text="8" FontSize="13" Foreground="#FF2D3E50" VerticalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
-                                        </Border>
-
-                                        <Border Grid.Column="2" Padding="15,0">
-                                            <Ellipse Width="10" Height="10" Fill="#FF28A745" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </StackPanel>
-                        </Border>
+                        <!-- Categories List - DYNAMICZNIE GENEROWANE -->
+                        <StackPanel x:Name="categoriesContainer" Margin="20">
+                            <!-- Wiersze kategorii będą dodawane z kodu C# -->
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </ScrollViewer>
         </Grid>
 
-        <!-- ADD CATEGORY MODAL OVERLAY -->
+        <!-- ADD/EDIT CATEGORY MODAL OVERLAY -->
         <Grid x:Name="modalOverlay" Grid.ColumnSpan="2" Background="#80000000" Visibility="Collapsed">
-            <Border Background="White" 
-                    CornerRadius="15" 
-                    Width="500" 
-                    Height="350"
-                    VerticalAlignment="Center" 
-                    HorizontalAlignment="Center">
+            <Border Background="White" CornerRadius="15" Width="500" Height="420"
+                   VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" ShadowDepth="5" BlurRadius="20" Opacity="0.2"/>
                 </Border.Effect>
@@ -606,76 +221,55 @@
                     </Grid.RowDefinitions>
 
                     <!-- HEADER -->
-                    <Grid Grid.Row="0">
-                        <!-- Usuń Background stąd -->
-                        <Border Background="#FFF8F9FA" CornerRadius="15,15,0,0">
-                            <!-- Dodaj Border z górnym CornerRadius -->
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="1"/>
-                                </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#FFF8F9FA" CornerRadius="15,15,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="1"/>
+                            </Grid.RowDefinitions>
 
-                                <Grid Grid.Row="0" Margin="30,0">
-                            <TextBlock Text="Add New Categories" 
-                                       FontSize="20" 
-                                       FontWeight="Bold"
-                                       Foreground="#FF2D3E50"
-                                       VerticalAlignment="Center"/>
+                            <Grid Grid.Row="0" Margin="30,0">
+                                <TextBlock x:Name="txtModalTitle" Text="Add New Category" 
+                                          FontSize="20" FontWeight="Bold"
+                                          Foreground="#FF2D3E50" VerticalAlignment="Center"/>
 
-                            <Button x:Name="btnCloseModal"
-                                    Width="30" Height="30"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Cursor="Hand"
-                                    Click="CloseModal_Click">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" 
-                                                            CornerRadius="6">
-                                                        <ContentPresenter HorizontalAlignment="Center" 
-                                                                        VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#FFEEEEEE"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                                <TextBlock Text="✕" FontSize="16" Foreground="#FF6C757D"/>
-                            </Button>
-                        </Grid>
-
-                                <Rectangle Grid.Row="1" Fill="#FFDEE2E6" Height="1"/>
+                                <Button Width="30" Height="30" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center" Background="Transparent"
+                                       BorderThickness="0" Cursor="Hand" Click="CloseModal_Click">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FFEEEEEE"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <TextBlock Text="✕" FontSize="16" Foreground="#FF6C757D"/>
+                                </Button>
                             </Grid>
-                        </Border>
-                    </Grid>
+
+                            <Rectangle Grid.Row="1" Fill="#FFDEE2E6" Height="1"/>
+                        </Grid>
+                    </Border>
 
                     <!-- FORM CONTENT -->
                     <ScrollViewer Grid.Row="1" Margin="30,25">
                         <StackPanel>
                             <!-- Category Name -->
-                            <StackPanel Margin="0,0,0,25">
-                                <TextBlock Text="Category Name:"
-                                          FontSize="13"
-                                          Foreground="#FF6C757D"
-                                          Margin="0,0,0,8"/>
-                                <TextBox x:Name="txtCategoryName"
-                                        Height="45"
-                                        Padding="15,0"
-                                        FontSize="14"
-                                        BorderBrush="#FFDEE2E6"
-                                        BorderThickness="1"
-                                        Background="White"
+                            <StackPanel Margin="0,0,0,20">
+                                <TextBlock Text="Category Name:" FontSize="13" Foreground="#FF6C757D" Margin="0,0,0,8"/>
+                                <TextBox x:Name="txtCategoryName" Height="45" Padding="15,0" FontSize="14"
+                                        BorderBrush="#FFDEE2E6" BorderThickness="1" Background="White"
                                         VerticalContentAlignment="Center">
                                     <TextBox.Resources>
                                         <Style TargetType="Border">
@@ -686,23 +280,26 @@
                             </StackPanel>
 
                             <!-- Parent Category -->
-                            <StackPanel Margin="0,0,0,25">
-                                <TextBlock Text="Parent Category:"
-                                          FontSize="13"
-                                          Foreground="#FF6C757D"
-                                          Margin="0,0,0,8"/>
-                                <ComboBox x:Name="cmbParentCategory"
-                                         Height="45"
-                                         FontSize="14"
-                                         Padding="15,0"
-                                         BorderBrush="#FFDEE2E6"
-                                         Style="{StaticResource FilterComboBoxStyle}">
+                            <StackPanel Margin="0,0,0,20">
+                                <TextBlock Text="Parent Category:" FontSize="13" Foreground="#FF6C757D" Margin="0,0,0,8"/>
+                                <ComboBox x:Name="cmbParentCategory" Height="45" FontSize="14" Padding="15,0"
+                                         BorderBrush="#FFDEE2E6" Style="{StaticResource FilterComboBoxStyle}">
                                     <ComboBoxItem Content="None (Main Category)" IsSelected="True"/>
-                                    <ComboBoxItem Content="Bikes"/>
-                                    <ComboBoxItem Content="Tires"/>
-                                    <ComboBoxItem Content="Chains"/>
-                                    <ComboBoxItem Content="Brakes"/>
                                 </ComboBox>
+                            </StackPanel>
+
+                            <!-- Description -->
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="Description (optional):" FontSize="13" Foreground="#FF6C757D" Margin="0,0,0,8"/>
+                                <TextBox x:Name="txtCategoryDescription" Height="70" Padding="15,10" FontSize="14"
+                                        BorderBrush="#FFDEE2E6" BorderThickness="1" Background="White"
+                                        TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto">
+                                    <TextBox.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="8"/>
+                                        </Style>
+                                    </TextBox.Resources>
+                                </TextBox>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -716,16 +313,9 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Cancel Button -->
-                        <Button Grid.Column="0"
-                               Content="Cancel"
-                               Height="50"
-                               FontSize="15"
-                               FontWeight="SemiBold"
-                               Background="#FFF8F9FA"
-                               Foreground="#FF6C757D"
-                               BorderThickness="1"
-                               BorderBrush="#FFDEE2E6"
-                               Cursor=""
+                        <Button Grid.Column="0" Content="Cancel" Height="50" FontSize="15"
+                               FontWeight="SemiBold" Background="#FFF8F9FA" Foreground="#FF6C757D"
+                               BorderThickness="1" BorderBrush="#FFDEE2E6" Cursor="Hand"
                                Click="CancelModal_Click">
                             <Button.Style>
                                 <Style TargetType="Button">
@@ -736,8 +326,7 @@
                                                        BorderBrush="{TemplateBinding BorderBrush}"
                                                        BorderThickness="{TemplateBinding BorderThickness}"
                                                        CornerRadius="10">
-                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"/>
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -752,25 +341,16 @@
                         </Button>
 
                         <!-- Save Button -->
-                        <Button Grid.Column="2"
-                               Content="Save"
-                               Height="50"
-                               FontSize="15"
-                               FontWeight="SemiBold"
-                               Background="#FF2D3E50"
-                               Foreground="White"
-                               BorderThickness="0"
-                               Cursor="Hand"
-                               Click="SaveCategory_Click">
+                        <Button Grid.Column="2" Content="Save" Height="50" FontSize="15"
+                               FontWeight="SemiBold" Background="#FF2D3E50" Foreground="White"
+                               BorderThickness="0" Cursor="Hand" Click="SaveCategory_Click">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                       CornerRadius="10">
-                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"/>
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>

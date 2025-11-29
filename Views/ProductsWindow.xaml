@@ -302,7 +302,7 @@
                         <!-- Search & Filters -->
                         <Grid Margin="0,0,0,30">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="450"/>
+                                <ColumnDefinition Width="300"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 

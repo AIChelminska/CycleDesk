@@ -42,6 +42,46 @@ namespace CycleDesk.Data
                 entity.HasKey(e => e.ProductId);
                 entity.Property(e => e.ProductId).HasColumnName("ProductID");
             });
+
+            modelBuilder.Entity<Supplier>(entity =>
+            {
+                entity.ToTable("Suppliers");
+                entity.HasKey(e => e.SupplierId);
+                entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("Users");
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.UserId).HasColumnName("UserID");
+            });
+
+            modelBuilder.Entity<GoodsReceipt>(entity =>
+            {
+                entity.ToTable("GoodsReceipts");
+                entity.HasKey(e => e.GoodsReceiptId);
+                entity.Property(e => e.GoodsReceiptId).HasColumnName("GoodsReceiptID");
+                entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
+                entity.Property(e => e.ReceivedByUserId).HasColumnName("ReceivedByUserID");
+            });
+
+            modelBuilder.Entity<GoodsReceiptItem>(entity =>
+            {
+                entity.ToTable("GoodsReceiptItems");
+                entity.HasKey(e => e.GoodsReceiptItemId);
+                entity.Property(e => e.GoodsReceiptItemId).HasColumnName("GoodsReceiptItemID");
+                entity.Property(e => e.GoodsReceiptId).HasColumnName("GoodsReceiptID");
+                entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            });
+
+            modelBuilder.Entity<Inventory>(entity =>
+            {
+                entity.ToTable("Inventory");
+                entity.HasKey(e => e.InventoryId);
+                entity.Property(e => e.InventoryId).HasColumnName("InventoryID");
+                entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            });
         }
     }
 }

@@ -4,9 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CycleDesk.Services
 {
-    /// <summary>
-    /// DTO dla wyświetlania produktów z pełnymi danymi (JOIN z Inventory, Category, Supplier)
-    /// </summary>
     public class ProductDisplayDto
     {
         public int ProductId { get; set; }
@@ -32,12 +29,8 @@ namespace CycleDesk.Services
         public DateTime CreatedDate { get; set; }
     }
 
-    /// <summary>
-    /// Serwis do obsługi produktów używający Entity Framework Core
-    /// </summary>
     public class ProductService
     {
-        // ===== CREATE =====
         public int AddProduct(Product product, int initialQuantity = 0, string locationInWarehouse = null)
         {
             using (var context = new CycleDeskDbContext())
@@ -125,7 +118,7 @@ namespace CycleDesk.Services
                         product.StockStatus = "Critical";
                         product.StockStatusColor = "#FFDC3545"; // czerwony
                     }
-                    else if (product.QuantityInStock <= product.ReorderLevel)
+                    else if (product.QuantityInStock < product.ReorderLevel)
                     {
                         product.StockStatus = "Low Stock";
                         product.StockStatusColor = "#FFFFC107"; // żółty
@@ -189,7 +182,7 @@ namespace CycleDesk.Services
                         product.StockStatus = "Critical";
                         product.StockStatusColor = "#FFDC3545";
                     }
-                    else if (product.QuantityInStock <= product.ReorderLevel)
+                    else if (product.QuantityInStock < product.ReorderLevel)
                     {
                         product.StockStatus = "Low Stock";
                         product.StockStatusColor = "#FFFFC107";

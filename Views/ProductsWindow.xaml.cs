@@ -291,19 +291,53 @@ namespace CycleDesk
                 Width = 40,
                 Height = 40,
                 Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8F9FA")),
-                CornerRadius = new CornerRadius(5)
+                CornerRadius = new CornerRadius(5),
+                ClipToBounds = true
             };
 
-            var emoji = new TextBlock
+            // Sprawdź czy produkt ma zdjęcie w bazie
+            if (!string.IsNullOrEmpty(product.ImagePath) && System.IO.File.Exists(product.ImagePath))
             {
-                Text = GetCategoryEmoji(product.CategoryName),
-                FontSize = 24,
+                try
+                {
+                    var image = new System.Windows.Controls.Image
+                    {
+                        Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(product.ImagePath, UriKind.RelativeOrAbsolute)),
+                        Stretch = Stretch.UniformToFill
+                    };
+                    imageBorder.Child = image;
+                }
+                catch
+                {
+                    // Jeśli błąd ładowania - pokaż ikonę "no image"
+                    imageBorder.Child = CreateNoImageIcon();
+                }
+            }
+            else
+            {
+                // Brak zdjęcia - pokaż ikonę "no image"
+                imageBorder.Child = CreateNoImageIcon();
+            }
+
+            return imageBorder;
+        }
+
+        private UIElement CreateNoImageIcon()
+        {
+            // Ikona aparatu/zdjęcia z przekreśleniem
+            var grid = new Grid();
+
+            var icon = new TextBlock
+            {
+                Text = "🖼️",
+                FontSize = 20,
                 VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Opacity = 0.4
             };
 
-            imageBorder.Child = emoji;
-            return imageBorder;
+            grid.Children.Add(icon);
+            return grid;
         }
 
         private string GetCategoryEmoji(string categoryName)
