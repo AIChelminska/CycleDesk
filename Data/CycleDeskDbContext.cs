@@ -1,4 +1,4 @@
-﻿using CycleDesk.Models;
+using CycleDesk.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CycleDesk.Data
@@ -12,7 +12,7 @@ namespace CycleDesk.Data
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Inventory> Inventory { get; set; }
-        public DbSet<StockHistory> StockHistory { get; set; }
+        public DbSet<InventoryAdjustment> InventoryAdjustments { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleItem> SaleItems { get; set; }
@@ -81,6 +81,50 @@ namespace CycleDesk.Data
                 entity.HasKey(e => e.InventoryId);
                 entity.Property(e => e.InventoryId).HasColumnName("InventoryID");
                 entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            });
+
+            modelBuilder.Entity<InventoryAdjustment>(entity =>
+            {
+                entity.ToTable("InventoryAdjustments");
+                entity.HasKey(e => e.AdjustmentId);
+                entity.Property(e => e.AdjustmentId).HasColumnName("AdjustmentID");
+                entity.Property(e => e.ProductId).HasColumnName("ProductID");
+                entity.Property(e => e.AdjustedByUserId).HasColumnName("AdjustedByUserID");
+            });
+
+            modelBuilder.Entity<Sale>(entity =>
+            {
+                entity.ToTable("Sales");
+                entity.HasKey(e => e.SaleId);
+                entity.Property(e => e.SaleId).HasColumnName("SaleID");
+                entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+                entity.Property(e => e.SoldByUserId).HasColumnName("SoldByUserID");
+            });
+
+            modelBuilder.Entity<SaleItem>(entity =>
+            {
+                entity.ToTable("SaleItems");
+                entity.HasKey(e => e.SaleItemId);
+                entity.Property(e => e.SaleItemId).HasColumnName("SaleItemID");
+                entity.Property(e => e.SaleId).HasColumnName("SaleID");
+                entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            });
+
+            modelBuilder.Entity<Invoice>(entity =>
+            {
+                entity.ToTable("Invoices");
+                entity.HasKey(e => e.InvoiceId);
+                entity.Property(e => e.InvoiceId).HasColumnName("InvoiceID");
+                entity.Property(e => e.SaleId).HasColumnName("SaleID");
+                entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+                entity.Property(e => e.IssuedByUserId).HasColumnName("IssuedByUserID");
+            });
+
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable("Customers");
+                entity.HasKey(e => e.CustomerId);
+                entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             });
         }
     }

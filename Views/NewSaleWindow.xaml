@@ -226,24 +226,153 @@
                                              FontWeight="Bold"
                                              Foreground="#FF2D3E50"
                                              Margin="0,0,0,15"/>
-                                    <TextBox x:Name="txtSearchProduct"
-                                            Text="🔍 Scan barcode or search product (SKU, name)..."
-                                            FontSize="15"
-                                            Height="45"
-                                            VerticalContentAlignment="Center"
-                                            Padding="15,0"
-                                            Foreground="#FF6C757D"
-                                            BorderBrush="#FFDEE2E6"
-                                            BorderThickness="1"
-                                            GotFocus="SearchProduct_GotFocus"
-                                            LostFocus="SearchProduct_LostFocus"
-                                            TextChanged="SearchProduct_TextChanged">
-                                        <TextBox.Resources>
-                                            <Style TargetType="Border">
-                                                <Setter Property="CornerRadius" Value="8"/>
-                                            </Style>
-                                        </TextBox.Resources>
-                                    </TextBox>
+                                    <Grid>
+                                        <TextBox x:Name="txtSearchProduct"
+                                                Text="🔍 Scan barcode or search product (SKU, name)..."
+                                                FontSize="15"
+                                                Height="45"
+                                                VerticalContentAlignment="Center"
+                                                Padding="15,0"
+                                                Foreground="#FF6C757D"
+                                                BorderBrush="#FFDEE2E6"
+                                                BorderThickness="1"
+                                                GotFocus="SearchProduct_GotFocus"
+                                                LostFocus="SearchProduct_LostFocus"
+                                                TextChanged="SearchProduct_TextChanged"
+                                                PreviewKeyDown="SearchProduct_PreviewKeyDown">
+                                            <TextBox.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="8"/>
+                                                </Style>
+                                            </TextBox.Resources>
+                                        </TextBox>
+                                        
+                                        <!-- Search Results Dropdown -->
+                                        <Popup x:Name="searchResultsPopup"
+                                               PlacementTarget="{Binding ElementName=txtSearchProduct}"
+                                               Placement="Bottom"
+                                               StaysOpen="False"
+                                               AllowsTransparency="True"
+                                               PopupAnimation="Slide">
+                                            <Border Background="White"
+                                                   BorderBrush="#FFDEE2E6"
+                                                   BorderThickness="1"
+                                                   CornerRadius="8"
+                                                   Width="{Binding ActualWidth, ElementName=txtSearchProduct}"
+                                                   MaxHeight="350">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="#33000000" Direction="270" ShadowDepth="4" BlurRadius="12" Opacity="0.4"/>
+                                                </Border.Effect>
+                                                <Grid>
+                                                    <!-- No results message -->
+                                                    <TextBlock x:Name="noResultsMessage"
+                                                             Text="No products found"
+                                                             FontSize="14"
+                                                             Foreground="#FF6C757D"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             Padding="20"
+                                                             Visibility="Collapsed"/>
+                                                    
+                                                    <!-- Results list -->
+                                                    <ListView x:Name="searchResultsList"
+                                                            BorderThickness="0"
+                                                            Background="Transparent"
+                                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                            PreviewMouseLeftButtonUp="SearchResultsList_PreviewMouseLeftButtonUp"
+                                                            PreviewKeyDown="SearchResultsList_PreviewKeyDown">
+                                                        <ListView.ItemContainerStyle>
+                                                            <Style TargetType="ListViewItem">
+                                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                                <Setter Property="Padding" Value="12,10"/>
+                                                                <Setter Property="Cursor" Value="Hand"/>
+                                                                <Setter Property="Template">
+                                                                    <Setter.Value>
+                                                                        <ControlTemplate TargetType="ListViewItem">
+                                                                            <Border x:Name="itemBorder"
+                                                                                   Background="Transparent"
+                                                                                   Padding="{TemplateBinding Padding}">
+                                                                                <ContentPresenter/>
+                                                                            </Border>
+                                                                            <ControlTemplate.Triggers>
+                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                    <Setter TargetName="itemBorder" Property="Background" Value="#FFF8F9FA"/>
+                                                                                </Trigger>
+                                                                                <Trigger Property="IsSelected" Value="True">
+                                                                                    <Setter TargetName="itemBorder" Property="Background" Value="#FFE3F2FD"/>
+                                                                                </Trigger>
+                                                                            </ControlTemplate.Triggers>
+                                                                        </ControlTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </Style>
+                                                        </ListView.ItemContainerStyle>
+                                                        <ListView.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    
+                                                                    <!-- Product info -->
+                                                                    <StackPanel Grid.Column="0">
+                                                                        <TextBlock Text="{Binding ProductName}" 
+                                                                                 FontSize="14"
+                                                                                 FontWeight="SemiBold"
+                                                                                 Foreground="#FF2D3E50"
+                                                                                 TextTrimming="CharacterEllipsis"/>
+                                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                                            <TextBlock Text="{Binding SKU}" 
+                                                                                     FontSize="12"
+                                                                                     Foreground="#FF6C757D"/>
+                                                                            <TextBlock Text=" • " 
+                                                                                     FontSize="12"
+                                                                                     Foreground="#FF6C757D"/>
+                                                                            <TextBlock Text="{Binding CategoryName}" 
+                                                                                     FontSize="12"
+                                                                                     Foreground="#FF6C757D"/>
+                                                                        </StackPanel>
+                                                                    </StackPanel>
+                                                                    
+                                                                    <!-- Price -->
+                                                                    <TextBlock Grid.Column="1"
+                                                                             Text="{Binding UnitPrice, StringFormat='PLN {0:N2}'}"
+                                                                             FontSize="14"
+                                                                             FontWeight="SemiBold"
+                                                                             Foreground="#FF28A745"
+                                                                             VerticalAlignment="Center"
+                                                                             Margin="15,0"/>
+                                                                    
+                                                                    <!-- Stock indicator -->
+                                                                    <Border Grid.Column="2"
+                                                                           CornerRadius="4"
+                                                                           Padding="8,4"
+                                                                           VerticalAlignment="Center">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="Background" Value="#FF28A745"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                                                                                        <Setter Property="Background" Value="#FFDC3545"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <TextBlock Text="{Binding StockQuantity, StringFormat='Stock: {0}'}"
+                                                                                 FontSize="11"
+                                                                                 Foreground="White"
+                                                                                 FontWeight="SemiBold"/>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ListView.ItemTemplate>
+                                                    </ListView>
+                                                </Grid>
+                                            </Border>
+                                        </Popup>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
 

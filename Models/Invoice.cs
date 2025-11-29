@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CycleDesk.Models
@@ -11,7 +11,7 @@ namespace CycleDesk.Models
         public int InvoiceId { get; set; }
 
         public string InvoiceNumber { get; set; }
-        public string InvoiceType { get; set; }
+        public string InvoiceType { get; set; } // 'Receipt', 'VAT Invoice', 'Proforma'
 
         [Column("SaleID")]
         public int SaleId { get; set; }
@@ -25,7 +25,7 @@ namespace CycleDesk.Models
         public decimal SubtotalAmount { get; set; }
         public decimal VATAmount { get; set; }
         public decimal TotalAmount { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } // 'Draft', 'Issued', 'Paid', 'Overdue', 'Cancelled'
         public string Notes { get; set; }
 
         [Column("IssuedByUserID")]

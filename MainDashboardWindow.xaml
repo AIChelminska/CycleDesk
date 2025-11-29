@@ -201,15 +201,17 @@
                                           Foreground="#FF6C757D"
                                           Margin="0,0,0,15"/>
 
-                                <TextBlock Grid.Row="1"
-                                          Text="8,902.30 PLN"
+                                <TextBlock x:Name="txtTodaySales"
+                                          Grid.Row="1"
+                                          Text="0,00 PLN"
                                           FontSize="36"
                                           FontWeight="Bold"
                                           Foreground="#FF2D3E50"
                                           VerticalAlignment="Center"/>
 
                                 <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="↑ 12.5%"
+                                    <TextBlock x:Name="txtSalesChange"
+                                              Text="↑ 0.0%"
                                               FontSize="14"
                                               Foreground="#FF28A745"
                                               FontWeight="SemiBold"
@@ -247,15 +249,17 @@
                                           Foreground="#FF6C757D"
                                           Margin="0,0,0,15"/>
 
-                                <TextBlock Grid.Row="1"
-                                          Text="18"
+                                <TextBlock x:Name="txtTransactions"
+                                          Grid.Row="1"
+                                          Text="0"
                                           FontSize="36"
                                           FontWeight="Bold"
                                           Foreground="#FF2D3E50"
                                           VerticalAlignment="Center"/>
 
                                 <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                    <TextBlock Text="↑ 8.2%"
+                                    <TextBlock x:Name="txtTransactionsChange"
+                                              Text="↑ 0.0%"
                                               FontSize="14"
                                               Foreground="#FF28A745"
                                               FontWeight="SemiBold"
@@ -294,7 +298,8 @@
                                           Margin="0,0,0,15"/>
 
                                 <StackPanel Grid.Row="1" VerticalAlignment="Center">
-                                    <TextBlock Text="12"
+                                    <TextBlock x:Name="txtLowStock"
+                                              Text="0"
                                               FontSize="36"
                                               FontWeight="Bold"
                                               Foreground="#FFFFC107"
@@ -337,8 +342,9 @@
                                           Foreground="#FF6C757D"
                                           Margin="0,0,0,15"/>
 
-                                <TextBlock Grid.Row="1"
-                                          Text="53,340 PLN"
+                                <TextBlock x:Name="txtWarehouseValue"
+                                          Grid.Row="1"
+                                          Text="0 PLN"
                                           FontSize="36"
                                           FontWeight="Bold"
                                           Foreground="#FF2D3E50"
@@ -381,30 +387,39 @@
 
                                     <!-- Toggle buttons -->
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Border Background="#FF2D3E50"
+                                        <Border x:Name="btn7Days"
+                           Background="#FF2D3E50"
                            CornerRadius="5"
                            Padding="12,6"
-                           Margin="0,0,8,0">
+                           Margin="0,0,8,0"
+                           Cursor="Hand"
+                           MouseLeftButtonUp="ChartPeriod7Days_Click">
                                             <TextBlock Text="Last 7 Days"
                                   FontSize="12"
                                   Foreground="White"
                                   FontWeight="SemiBold"/>
                                         </Border>
-                                        <Border Background="Transparent"
+                                        <Border x:Name="btn30Days"
+                           Background="Transparent"
                            BorderBrush="#FFDEE2E6"
                            BorderThickness="1"
                            CornerRadius="5"
                            Padding="12,6"
-                           Margin="0,0,8,0">
+                           Margin="0,0,8,0"
+                           Cursor="Hand"
+                           MouseLeftButtonUp="ChartPeriod30Days_Click">
                                             <TextBlock Text="Last 30 Days"
                                   FontSize="12"
                                   Foreground="#FF6C757D"/>
                                         </Border>
-                                        <Border Background="Transparent"
+                                        <Border x:Name="btn90Days"
+                           Background="Transparent"
                            BorderBrush="#FFDEE2E6"
                            BorderThickness="1"
                            CornerRadius="5"
-                           Padding="12,6">
+                           Padding="12,6"
+                           Cursor="Hand"
+                           MouseLeftButtonUp="ChartPeriod90Days_Click">
                                             <TextBlock Text="Last 90 Days"
                                   FontSize="12"
                                   Foreground="#FF6C757D"/>
@@ -424,17 +439,13 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Chart Placeholder -->
+                                <!-- Chart Canvas -->
                                 <Border Height="300" 
                    Background="#FFF8F9FA"
                    CornerRadius="10"
-                   Padding="20">
-                                    <TextBlock Text="📊 Chart placeholder - będziemy dodawać LiveCharts2 później"
-                          FontSize="14"
-                          Foreground="#FF6C757D"
-                          TextAlignment="Center"
-                          VerticalAlignment="Center"
-                          TextWrapping="Wrap"/>
+                   Padding="10">
+                                    <Canvas x:Name="chartCanvas" 
+                                            ClipToBounds="True"/>
                                 </Border>
                             </StackPanel>
                         </Border>
@@ -469,75 +480,8 @@
                                     <TextBlock Grid.Column="2" Text="Revenue" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Right"/>
                                 </Grid>
 
-                                <!-- Product 1 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Trek Marlin 5" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="8 pcs." FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="19 992,00 zł" FontSize="13" FontWeight="SemiBold" Foreground="#FF2D3E50" TextAlignment="Right"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 2 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Opona Schwalbe" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="5 pcs." FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="9 495,00 zł" FontSize="13" FontWeight="SemiBold" Foreground="#FF2D3E50" TextAlignment="Right"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 3 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Hamulce Shimano" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="24 pcs." FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="2 136,00 zł" FontSize="13" FontWeight="SemiBold" Foreground="#FF2D3E50" TextAlignment="Right"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 4 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Kask UVEX" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="12 pcs." FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="1 908,00 zł" FontSize="13" FontWeight="SemiBold" Foreground="#FF2D3E50" TextAlignment="Right"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 5 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Łańcuch KMC" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="15 pcs." FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="1 800,00 zł" FontSize="13" FontWeight="SemiBold" Foreground="#FF2D3E50" TextAlignment="Right"/>
-                                    </Grid>
-                                </Border>
+                                <!-- Dynamic Products Container -->
+                                <StackPanel x:Name="topProductsPanel"/>
 
                                 <!-- See Full Report -->
                                 <TextBlock Text="See The Full Report ►"
@@ -591,75 +535,8 @@
                                     <TextBlock Grid.Column="2" Text="Min" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
                                 </Grid>
 
-                                <!-- Product 1 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Schwalbe 26&quot; Tire" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="3" FontSize="13" Foreground="#FFDC3545" FontWeight="SemiBold" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="10" FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 2 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="KMC X11 Chain" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="1" FontSize="13" Foreground="#FFDC3545" FontWeight="SemiBold" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="8" FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 3 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="26&quot; Inner Tube" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="5" FontSize="13" Foreground="#FFFFC107" FontWeight="SemiBold" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="15" FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 4 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Shimano Brakes" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="2" FontSize="13" Foreground="#FFDC3545" FontWeight="SemiBold" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="8" FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Product 5 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Wellgo M20 Pedals" FontSize="13" Foreground="#FF2D3E50"/>
-                                        <TextBlock Grid.Column="1" Text="4" FontSize="13" Foreground="#FFFFC107" FontWeight="SemiBold" TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="12" FontSize="13" Foreground="#FF6C757D" TextAlignment="Center"/>
-                                    </Grid>
-                                </Border>
+                                <!-- Dynamic Products to Order Container -->
+                                <StackPanel x:Name="productsToOrderPanel"/>
 
                                 <!-- See Full Report -->
                                 <TextBlock Text="See The Full Report ►"
@@ -706,155 +583,8 @@
                                     <TextBlock Grid.Column="5" Text="Status" FontSize="11" FontWeight="SemiBold" Foreground="#FF6C757D" TextAlignment="Center"/>
                                 </Grid>
 
-                                <!-- Receipt 1 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,15">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="PZ/001" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="1" Text="Bike Parts PL" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="2" Text="08.10.2024" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="3" Text="12,450.00 PLN" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="4" Text="Anna Kowalska" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <Border Grid.Column="5" Background="#FFD4EDDA" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="✓" FontSize="11" Foreground="#FF28A745" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Approved" FontSize="11" Foreground="#FF28A745" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Receipt 2 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,15">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="PZ/002" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="1" Text="Trek Poland" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="2" Text="09.10.2024" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="3" Text="8,900.00 PLN" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="4" Text="Piotr Nowak" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <Border Grid.Column="5" Background="#FFFEF3CD" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="○" FontSize="11" Foreground="#FFFFC107" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Draft" FontSize="11" Foreground="#FFFFC107" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Receipt 3 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,15">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="PZ/003" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="1" Text="Shimano Europe" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="2" Text="07.10.2024" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="3" Text="15,230.00 PLN" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="4" Text="Marek Wiśniewski" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <Border Grid.Column="5" Background="#FFD4EDDA" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="✓" FontSize="11" Foreground="#FF28A745" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Approved" FontSize="11" Foreground="#FF28A745" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Receipt 4 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,15">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="PZ/004" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="1" Text="Giant Bicycles" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="2" Text="06.10.2024" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="3" Text="22,100.00 PLN" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="4" Text="Anna Kowalska" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <Border Grid.Column="5" Background="#D1ECF1" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="◐" FontSize="11" Foreground="#0C5460" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Pending" FontSize="11" Foreground="#0C5460" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Receipt 5 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,15">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="PZ/005" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="1" Text="KMC Chain Poland" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="2" Text="05.10.2024" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="3" Text="6,750.00 PLN" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="4" Text="Piotr Nowak" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <Border Grid.Column="5" Background="#FFD4EDDA" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="✓" FontSize="11" Foreground="#FF28A745" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Approved" FontSize="11" Foreground="#FF28A745" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Receipt 6 -->
-                                <Border BorderBrush="#FFF1F3F5" BorderThickness="0,1,0,0" Padding="0,15">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="PZ/006" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="1" Text="Schwalbe Tires" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="2" Text="04.10.2024" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="3" Text="11,890.00 PLN" FontSize="13" Foreground="#FF2D3E50" FontWeight="SemiBold" Margin="0,0,20,0"/>
-                                        <TextBlock Grid.Column="4" Text="Marek Wiśniewski" FontSize="13" Foreground="#FF6C757D" Margin="0,0,20,0"/>
-                                        <Border Grid.Column="5" Background="#FFFEF3CD" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="○" FontSize="11" Foreground="#FFFFC107" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Draft" FontSize="11" Foreground="#FFFFC107" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </Border>
+                                <!-- Dynamic Goods Receipts Container -->
+                                <StackPanel x:Name="goodsReceiptsPanel"/>
                             </StackPanel>
                         </Border>
                     </Grid>
