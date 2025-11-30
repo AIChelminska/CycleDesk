@@ -1,5 +1,6 @@
 ﻿using CycleDesk.Data;
 using CycleDesk.Views;
+using CycleDesk.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -17,15 +18,20 @@ namespace CycleDesk
         private LoginControl loginControl;
         private RegisterStep1Control registerStep1Control;
         private RegisterStep2Control registerStep2Control;
+        private UserService _userService;
 
         private string storedUsername = string.Empty;
         private string storedFirstName = string.Empty;
         private string storedLastName = string.Empty;
         private string storedAccountType = string.Empty;
+        private string storedAccessCode = string.Empty;
+        private bool isPasswordReset = false;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            _userService = new UserService();
 
             loginControl = new LoginControl();
             registerStep1Control = new RegisterStep1Control();
@@ -58,33 +64,62 @@ namespace CycleDesk
                 using var connection = new SqlConnection(connectionString);
                 await connection.OpenAsync();
 
-                // Policz użytkowników
-                using var cmd = new SqlCommand("SELECT COUNT(*) FROM Users", connection);
-                int userCount = (int)await cmd.ExecuteScalarAsync();
-
-                // Policz produkty
-                using var cmd2 = new SqlCommand("SELECT COUNT(*) FROM Products", connection);
-                int productCount = (int)await cmd2.ExecuteScalarAsync();
-
-                MessageBox.Show(
-                    $"✅ POŁĄCZONO Z BAZĄ!\n\n" +
-                    $"👥 Użytkownicy: {userCount}\n" +
-                    $"📦 Produkty: {productCount}\n\n" +
-                    $"🎉 SQL połączenie działa!",
-                    "Sukces!",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
+                // Pokaż toast sukcesu
+                ShowToast("Połączono z bazą danych!", "", true);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show(
-                    $"❌ BŁĄD:\n\n{ex.Message}",
-                    "Błąd połączenia",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                );
+                // Pokaż toast błędu
+                ShowToast("Nie połączono z bazą danych!", "Sprawdź połączenie z SQL Server", false);
             }
+        }
+
+        private async void ShowToast(string title, string message, bool isSuccess)
+        {
+            // Ustaw kolor tła i ikonę w zależności od sukcesu/błędu
+            if (isSuccess)
+            {
+                ToastBackground.Color = (Color)ColorConverter.ConvertFromString("#22C55E"); // Zielony
+                ToastIcon.Text = "✓";
+            }
+            else
+            {
+                ToastBackground.Color = (Color)ColorConverter.ConvertFromString("#EF4444"); // Czerwony
+                ToastIcon.Text = "✗";
+            }
+
+            ToastTitle.Text = title;
+            ToastMessage.Text = message;
+            ToastMessage.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
+
+            // Animacja wejścia
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            var slideIn = new DoubleAnimation(50, 0, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            ToastNotification.BeginAnimation(OpacityProperty, fadeIn);
+            ToastTranslate.BeginAnimation(TranslateTransform.XProperty, slideIn);
+
+            // Czekaj 4 sekundy
+            await Task.Delay(4000);
+
+            // Animacja wyjścia
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+            var slideOut = new DoubleAnimation(0, 50, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+
+            ToastNotification.BeginAnimation(OpacityProperty, fadeOut);
+            ToastTranslate.BeginAnimation(TranslateTransform.XProperty, slideOut);
         }
 
         private async void StartSplashScreen()
@@ -131,19 +166,52 @@ namespace CycleDesk
             string password = loginControl.Password;
 
             using var context = new CycleDeskDbContext();
+            
+            // Najpierw znajdź użytkownika po username
             var user = await context.Users
-                .FirstOrDefaultAsync(u => u.Username == username && u.PasswordHash == password && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
 
             if (user != null)
             {
-                MainDashboardWindow dashboard = new MainDashboardWindow(
-                    username: user.Username,
-                    password: password,
-                    fullName: user.FullName,
-                    role: user.Role
-                );
-                dashboard.Show();
-                this.Close();
+                // Weryfikacja hasła z BCrypt
+                bool isPasswordValid = false;
+                try
+                {
+                    // Sprawdź czy hash zaczyna się od $2 (BCrypt format)
+                    if (user.PasswordHash.StartsWith("$2"))
+                    {
+                        isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+                    }
+                    else
+                    {
+                        // Fallback dla starych haseł (plain text) - do usunięcia po migracji
+                        isPasswordValid = user.PasswordHash == password;
+                    }
+                }
+                catch
+                {
+                    isPasswordValid = false;
+                }
+
+                if (isPasswordValid)
+                {
+                    // Aktualizuj LastLogin
+                    user.LastLoginDate = DateTime.Now;
+                    await context.SaveChangesAsync();
+                    
+                    MainDashboardWindow dashboard = new MainDashboardWindow(
+                        username: user.Username,
+                        password: password,
+                        fullName: user.FullName,
+                        role: user.Role
+                    );
+                    dashboard.Show();
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Invalid username or password!", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             else
             {
@@ -153,11 +221,15 @@ namespace CycleDesk
 
         private void LoginControl_ForgotPasswordClicked(object? sender, EventArgs e)
         {
-            MessageBox.Show("Forgot Password!", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Przekieruj do ekranu wpisywania kodu (ten sam co dla nowych użytkowników)
+            // Użytkownik wpisze kod resetu hasła otrzymany od managera
+            registerStep1Control.SetForPasswordReset();
+            SwitchView(registerStep1Control);
         }
 
         private void LoginControl_SignUpClicked(object? sender, EventArgs e)
         {
+            registerStep1Control.SetForActivation();
             SwitchView(registerStep1Control);
         }
 
@@ -173,7 +245,14 @@ namespace CycleDesk
 
             if (VerifyCodeInDatabase(code))
             {
-                registerStep2Control.SetAccountDetails(storedUsername, storedFirstName, storedLastName, storedAccountType);
+                if (isPasswordReset)
+                {
+                    registerStep2Control.SetAccountDetailsForReset(storedUsername, storedFirstName, storedLastName);
+                }
+                else
+                {
+                    registerStep2Control.SetAccountDetails(storedUsername, storedFirstName, storedLastName, storedAccountType);
+                }
                 SwitchView(registerStep2Control);
             }
             else
@@ -184,12 +263,29 @@ namespace CycleDesk
 
         private bool VerifyCodeInDatabase(string code)
         {
-            if (code == "12345678901")
+            // Sprawdź czy to kod resetu hasła
+            var resetCode = _userService.ValidatePasswordResetCode(code);
+            if (resetCode != null)
             {
-                storedUsername = "john_operator";
-                storedFirstName = "John";
-                storedLastName = "Smith";
-                storedAccountType = "Operator";
+                storedUsername = resetCode.Username;
+                storedFirstName = resetCode.FirstName;
+                storedLastName = resetCode.LastName;
+                storedAccountType = resetCode.AccountType;
+                storedAccessCode = code;
+                isPasswordReset = true;
+                return true;
+            }
+
+            // Sprawdź czy to kod dostępu dla nowego użytkownika
+            var accessCode = _userService.ValidateAccessCode(code);
+            if (accessCode != null)
+            {
+                storedUsername = accessCode.Username;
+                storedFirstName = accessCode.FirstName;
+                storedLastName = accessCode.LastName;
+                storedAccountType = accessCode.AccountType;
+                storedAccessCode = code;
+                isPasswordReset = false;
                 return true;
             }
             return false;
@@ -214,17 +310,63 @@ namespace CycleDesk
 
             if (!IsPasswordStrong(password))
             {
-                MessageBox.Show("Password too weak!", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.", 
+                    "Password Too Weak", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            MessageBox.Show($"Account activated!\n\nUsername: {storedUsername}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                if (isPasswordReset)
+                {
+                    // Reset hasła
+                    bool success = _userService.ResetPasswordWithCode(storedAccessCode, password);
+                    
+                    if (success)
+                    {
+                        MessageBox.Show($"Password has been reset successfully!\n\nUsername: {storedUsername}\n\nYou can now log in with your new password.", 
+                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            registerStep2Control.ClearPasswords();
-            registerStep1Control.ClearCode();
-            loginControl.SetUsername(storedUsername);
+                        registerStep2Control.ClearPasswords();
+                        registerStep1Control.ClearCode();
+                        loginControl.SetUsername(storedUsername);
+                        isPasswordReset = false;
 
-            SwitchView(loginControl);
+                        SwitchView(loginControl);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error resetting password. The reset code may have been already used.", 
+                            "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    // Aktywuj konto - tworzy użytkownika w bazie i oznacza kod jako użyty
+                    var newUser = _userService.ActivateUserAccount(storedAccessCode, password);
+                    
+                    if (newUser != null)
+                    {
+                        MessageBox.Show($"Account activated successfully!\n\nUsername: {newUser.Username}\nRole: {newUser.Role}\n\nYou can now log in.", 
+                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        registerStep2Control.ClearPasswords();
+                        registerStep1Control.ClearCode();
+                        loginControl.SetUsername(newUser.Username);
+
+                        SwitchView(loginControl);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error activating account. The access code may have been already used.", 
+                            "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private bool IsPasswordStrong(string password)

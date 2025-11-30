@@ -81,10 +81,7 @@ namespace CycleDesk
                 Close();
             };
 
-            sideMenu.InvoicesClicked += (s, e) =>
-            {
-                // Już jesteśmy na tej stronie - nic nie rób
-            };
+            
 
             sideMenu.SalesReportsClicked += (s, e) =>
             {

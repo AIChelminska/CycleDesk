@@ -23,10 +23,22 @@ namespace CycleDesk.Views
 
         public void SetAccountDetails(string username, string firstName, string lastName, string accountType)
         {
+            lblTitle.Text = "Set Your Password";
             lblUsername.Text = username;
             lblFirstName.Text = firstName;
             lblLastName.Text = lastName;
             lblAccountType.Text = accountType;
+            btnActivate.Content = "Activate Account";
+        }
+
+        public void SetAccountDetailsForReset(string username, string firstName, string lastName)
+        {
+            lblTitle.Text = "Reset Your Password";
+            lblUsername.Text = username;
+            lblFirstName.Text = firstName;
+            lblLastName.Text = lastName;
+            lblAccountType.Text = "Password Reset";
+            btnActivate.Content = "Reset Password";
         }
 
         public void ClearPasswords()

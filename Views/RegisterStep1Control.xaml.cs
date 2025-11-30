@@ -23,6 +23,20 @@ namespace CycleDesk.Views
             txtAccessCode.Text = string.Empty;
         }
 
+        public void SetForPasswordReset()
+        {
+            lblTitle.Text = "Reset Your Password";
+            lblSubtitle.Text = "Enter the 11-digit reset code";
+            txtAccessCode.Text = string.Empty;
+        }
+
+        public void SetForActivation()
+        {
+            lblTitle.Text = "Activate Your Account";
+            lblSubtitle.Text = "Enter the 11-digit access code";
+            txtAccessCode.Text = string.Empty;
+        }
+
         private void NumbersOnly_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = !Regex.IsMatch(e.Text, "^[0-9]+$");

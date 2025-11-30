@@ -633,5 +633,209 @@ namespace CycleDesk.Services
                 return (0, 0);
             }
         }
+
+        /// <summary>
+        /// Get sales history with items
+        /// </summary>
+        public List<SaleHistoryDto> GetSalesHistory(DateTime? dateFrom = null, DateTime? dateTo = null, 
+            string paymentMethod = null, string status = null)
+        {
+            try
+            {
+                using (var context = new CycleDeskDbContext())
+                {
+                    var query = context.Sales.AsQueryable();
+
+                    // Apply filters
+                    if (dateFrom.HasValue)
+                        query = query.Where(s => s.SaleDate >= dateFrom.Value);
+
+                    if (dateTo.HasValue)
+                        query = query.Where(s => s.SaleDate < dateTo.Value.AddDays(1));
+
+                    if (!string.IsNullOrEmpty(paymentMethod) && paymentMethod != "All")
+                        query = query.Where(s => s.PaymentMethod == paymentMethod);
+
+                    if (!string.IsNullOrEmpty(status) && status != "All")
+                        query = query.Where(s => s.Status == status);
+
+                    var sales = query
+                        .OrderByDescending(s => s.SaleDate)
+                        .Select(s => new
+                        {
+                            Sale = s,
+                            User = context.Users.FirstOrDefault(u => u.UserId == s.SoldByUserId),
+                            ItemsCount = context.SaleItems.Count(si => si.SaleId == s.SaleId),
+                            HasInvoice = context.Invoices.Any(i => i.SaleId == s.SaleId)
+                        })
+                        .ToList();
+
+                    return sales.Select(x => new SaleHistoryDto
+                    {
+                        SaleId = x.Sale.SaleId,
+                        SaleNumber = x.Sale.SaleNumber,
+                        SaleDate = x.Sale.SaleDate,
+                        CustomerName = x.Sale.CustomerName ?? "Walk-in Customer",
+                        PaymentMethod = x.Sale.PaymentMethod,
+                        SubtotalAmount = x.Sale.SubtotalAmount,
+                        DiscountAmount = x.Sale.DiscountAmount,
+                        VATAmount = x.Sale.VATAmount,
+                        TotalAmount = x.Sale.TotalAmount,
+                        Status = x.Sale.Status,
+                        CashierName = x.User != null ? $"{x.User.FirstName} {x.User.LastName}" : "Unknown",
+                        ItemsCount = x.ItemsCount,
+                        DocumentType = x.HasInvoice ? "Invoice" : "Receipt"
+                    }).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting sales history: {ex.Message}");
+                return new List<SaleHistoryDto>();
+            }
+        }
+
+        /// <summary>
+        /// Get sale items for a specific sale
+        /// </summary>
+        public List<SaleItemDto> GetSaleItems(int saleId)
+        {
+            try
+            {
+                using (var context = new CycleDeskDbContext())
+                {
+                    return context.SaleItems
+                        .Where(si => si.SaleId == saleId)
+                        .Select(si => new SaleItemDto
+                        {
+                            ProductId = si.ProductId,
+                            ProductName = si.ProductName,
+                            SKU = context.Products
+                                .Where(p => p.ProductId == si.ProductId)
+                                .Select(p => p.SKU)
+                                .FirstOrDefault() ?? "",
+                            Quantity = si.Quantity,
+                            UnitPrice = si.UnitPrice,
+                            VATRate = si.VATRate,
+                            VATAmount = si.VATAmount,
+                            TotalPrice = si.TotalPrice
+                        })
+                        .ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting sale items: {ex.Message}");
+                return new List<SaleItemDto>();
+            }
+        }
+
+        /// <summary>
+        /// Cancel a sale (set status to Cancelled and restore inventory)
+        /// </summary>
+        public bool CancelSale(int saleId, int userId)
+        {
+            try
+            {
+                using (var context = new CycleDeskDbContext())
+                {
+                    using (var transaction = context.Database.BeginTransaction())
+                    {
+                        try
+                        {
+                            var sale = context.Sales.FirstOrDefault(s => s.SaleId == saleId);
+                            if (sale == null || sale.Status == "Cancelled")
+                                return false;
+
+                            // Get sale items
+                            var saleItems = context.SaleItems.Where(si => si.SaleId == saleId).ToList();
+
+                            // Restore inventory
+                            foreach (var item in saleItems)
+                            {
+                                var inventory = context.Inventory.FirstOrDefault(i => i.ProductId == item.ProductId);
+                                if (inventory != null)
+                                {
+                                    inventory.QuantityInStock += item.Quantity;
+                                    inventory.LastStockUpdate = DateTime.Now;
+                                }
+
+                                // Add adjustment record
+                                context.InventoryAdjustments.Add(new InventoryAdjustment
+                                {
+                                    ProductId = item.ProductId,
+                                    AdjustmentType = "Return",
+                                    Quantity = item.Quantity,
+                                    Reason = $"Sale cancelled: {sale.SaleNumber}",
+                                    AdjustmentDate = DateTime.Now,
+                                    AdjustedByUserId = userId
+                                });
+                            }
+
+                            // Update sale status
+                            sale.Status = "Cancelled";
+                            sale.ModifiedDate = DateTime.Now;
+
+                            // Cancel related invoice if exists
+                            var invoice = context.Invoices.FirstOrDefault(i => i.SaleId == saleId);
+                            if (invoice != null)
+                            {
+                                invoice.Status = "Cancelled";
+                                invoice.ModifiedDate = DateTime.Now;
+                            }
+
+                            context.SaveChanges();
+                            transaction.Commit();
+                            return true;
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            return false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error cancelling sale: {ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// DTO for sales history display
+    /// </summary>
+    public class SaleHistoryDto
+    {
+        public int SaleId { get; set; }
+        public string SaleNumber { get; set; }
+        public DateTime SaleDate { get; set; }
+        public string CustomerName { get; set; }
+        public string PaymentMethod { get; set; }
+        public decimal SubtotalAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal VATAmount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Status { get; set; }
+        public string CashierName { get; set; }
+        public int ItemsCount { get; set; }
+        public string DocumentType { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for sale item display
+    /// </summary>
+    public class SaleItemDto
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+        public string SKU { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal VATRate { get; set; }
+        public decimal VATAmount { get; set; }
+        public decimal TotalPrice { get; set; }
     }
 }

@@ -516,7 +516,6 @@ namespace CycleDesk
             sideMenu.SuppliersClicked += (s, e) => { new SuppliersWindow(_username, _password, _fullName, _role).Show(); Close(); };
             sideMenu.NewSaleClicked += (s, e) => { new NewSaleWindow(_username, _password, _fullName, _role).Show(); Close(); };
             sideMenu.SalesHistoryClicked += (s, e) => { new SalesHistoryWindow(_username, _password, _fullName, _role).Show(); Close(); };
-            sideMenu.InvoicesClicked += (s, e) => { new InvoicesWindow(_username, _password, _fullName, _role).Show(); Close(); };
             sideMenu.SalesReportsClicked += (s, e) => { new SalesReportsWindow(_username, _password, _fullName, _role).Show(); Close(); };
             sideMenu.InventoryReportsClicked += (s, e) => { new InventoryReportsWindow(_username, _password, _fullName, _role).Show(); Close(); };
             sideMenu.ProductsToOrderClicked += (s, e) => { new ProductsToOrderWindow(_username, _password, _fullName, _role).Show(); Close(); };

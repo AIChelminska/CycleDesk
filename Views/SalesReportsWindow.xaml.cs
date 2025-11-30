@@ -89,11 +89,7 @@ namespace CycleDesk
                 Close();
             };
 
-            sideMenu.InvoicesClicked += (s, e) =>
-            {
-                new InvoicesWindow(_username, _password, _fullName, _role).Show();
-                Close();
-            };
+           
 
             sideMenu.SalesReportsClicked += (s, e) =>
             {

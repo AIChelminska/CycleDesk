@@ -1,10 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
+using CycleDesk.Models;
+using CycleDesk.Services;
 
 namespace CycleDesk
 {
@@ -14,9 +17,15 @@ namespace CycleDesk
         private string _password;
         private string _fullName;
         private string _role;
+        private int _currentUserId;
 
-        private ObservableCollection<User> _allUsers;
-        private ObservableCollection<User> _filteredUsers;
+        private UserService _userService;
+        private List<User> _allUsers;
+        private List<User> _filteredUsers;
+
+        private User _selectedUser;
+        private Border _currentlySelectedRow;
+        private bool _isEditMode;
 
         public UsersWindow(string username, string password, string fullName, string role)
         {
@@ -26,19 +35,685 @@ namespace CycleDesk
             _fullName = fullName;
             _role = role;
 
+            _userService = new UserService();
+
+            // Sprawdź uprawnienia
+            if (!_userService.CanManageUsers(role))
+            {
+                MessageBox.Show("You don't have permission to access User Management.",
+                    "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Close();
+                return;
+            }
+
+            // Pobierz ID aktualnie zalogowanego użytkownika
+            var currentUser = _userService.GetUserByUsername(username);
+            _currentUserId = currentUser?.UserId ?? 0;
+
             // Inicjalizuj SideMenuControl
             sideMenu.Initialize(fullName, role);
             sideMenu.SetActiveMenu("Administration", "Users");
 
-            // Podłącz eventy menu
             ConnectMenuEvents();
+            LoadUsers();
+        }
 
-            // Initialize data
-            LoadMockUsers();
+        // ===== DATA LOADING =====
+        private void LoadUsers()
+        {
+            try
+            {
+                _allUsers = _userService.GetAllUsers();
+                ApplyFilters();
+                UpdateStatistics();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading users: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void UpdateStatistics()
+        {
+            try
+            {
+                var stats = _userService.GetUserStatistics();
+                txtTotalUsers.Text = stats["Total"].ToString();
+                txtActiveUsers.Text = stats["Active"].ToString();
+                txtInactiveUsers.Text = stats["Inactive"].ToString();
+                txtManagerCount.Text = stats["Manager"].ToString();
+                txtUserCount.Text = $"({stats["Total"]} users)";
+            }
+            catch { }
+        }
+
+        // ===== FILTERING =====
+        private void ApplyFilters()
+        {
+            string searchText = txtSearch?.Text?.ToLower() ?? "";
+
+            _filteredUsers = _allUsers
+                .Where(u =>
+                    string.IsNullOrEmpty(searchText) ||
+                    u.Username.ToLower().Contains(searchText) ||
+                    u.FirstName.ToLower().Contains(searchText) ||
+                    u.LastName.ToLower().Contains(searchText) ||
+                    u.Role.ToLower().Contains(searchText) ||
+                    (u.Email != null && u.Email.ToLower().Contains(searchText)))
+                .OrderByDescending(u => u.CreatedDate)
+                .ToList();
+
+            DisplayUsers();
+        }
+
+        private void Search_TextChanged(object sender, TextChangedEventArgs e)
+        {
             ApplyFilters();
         }
 
-        // ===== MENU EVENTS CONNECTION =====
+        // ===== DISPLAY =====
+        private void DisplayUsers()
+        {
+            usersStackPanel.Children.Clear();
+
+            foreach (var user in _filteredUsers)
+            {
+                usersStackPanel.Children.Add(CreateUserRow(user));
+            }
+        }
+
+        private Border CreateUserRow(User user)
+        {
+            var border = new Border
+            {
+                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDEE2E6")),
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Background = Brushes.White,
+                Cursor = Cursors.Hand,
+                Tag = user
+            };
+
+            border.MouseLeftButtonDown += UserRow_Click;
+            border.MouseLeave += UserRow_MouseLeave;
+
+            var grid = new Grid { Height = 60 };
+
+            // Define columns
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
+
+            // Column 0: Avatar
+            grid.Children.Add(CreateCell(0, CreateAvatar(user)));
+
+            // Column 1: Full Name
+            grid.Children.Add(CreateCell(1, CreateTextBlock(user.FullName, true)));
+
+            // Column 2: Username
+            grid.Children.Add(CreateCell(2, CreateTextBlock(user.Username)));
+
+            // Column 3: Role Badge
+            grid.Children.Add(CreateCell(3, CreateRoleBadge(user.Role)));
+
+            // Column 4: Email
+            grid.Children.Add(CreateCell(4, CreateTextBlock(user.Email ?? "-")));
+
+            // Column 5: Status Badge
+            grid.Children.Add(CreateCell(5, CreateStatusBadge(user.IsActive)));
+
+            // Column 6: Last Login
+            grid.Children.Add(CreateCell(6, CreateTextBlock(user.LastLoginDate?.ToString("dd.MM.yyyy HH:mm") ?? "-", false, true)));
+
+            // Column 7: Created (no right border)
+            grid.Children.Add(CreateCell(7, CreateTextBlock(user.CreatedDate.ToString("dd.MM.yyyy"), false, true), false));
+
+            border.Child = grid;
+            return border;
+        }
+
+        private Border CreateCell(int column, UIElement content, bool hasRightBorder = true)
+        {
+            var border = new Border
+            {
+                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDEE2E6")),
+                BorderThickness = new Thickness(0, 0, hasRightBorder ? 1 : 0, 0),
+                Padding = new Thickness(15, 0, 15, 0)
+            };
+            Grid.SetColumn(border, column);
+            border.Child = content;
+            return border;
+        }
+
+        private UIElement CreateAvatar(User user)
+        {
+            string initials = GetInitials(user.FirstName, user.LastName);
+            var avatarBorder = new Border
+            {
+                Width = 40,
+                Height = 40,
+                CornerRadius = new CornerRadius(20),
+                Background = GetRoleColor(user.Role),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            avatarBorder.Child = new TextBlock
+            {
+                Text = initials,
+                FontSize = 14,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            return avatarBorder;
+        }
+
+        private string GetInitials(string firstName, string lastName)
+        {
+            string first = !string.IsNullOrEmpty(firstName) ? firstName[0].ToString().ToUpper() : "";
+            string last = !string.IsNullOrEmpty(lastName) ? lastName[0].ToString().ToUpper() : "";
+            return first + last;
+        }
+
+        private SolidColorBrush GetRoleColor(string role)
+        {
+            return role switch
+            {
+                "Manager" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDC3545")),
+                "Supervisor" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF17A2B8")),
+                "Operator" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF28A745")),
+                "Cashier" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFC107")),
+                _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D"))
+            };
+        }
+
+        private TextBlock CreateTextBlock(string text, bool isBold = false, bool isCenter = false)
+        {
+            return new TextBlock
+            {
+                Text = text,
+                FontSize = 13,
+                FontWeight = isBold ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isBold ? "#FF2D3E50" : "#FF6C757D")),
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = isCenter ? TextAlignment.Center : TextAlignment.Left,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+        }
+
+        private UIElement CreateRoleBadge(string role)
+        {
+            string bgColor = role switch
+            {
+                "Manager" => "#FFDC3545",
+                "Supervisor" => "#FF17A2B8",
+                "Operator" => "#FF28A745",
+                "Cashier" => "#FFFFC107",
+                _ => "#FF6C757D"
+            };
+
+            var badge = new Border
+            {
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(bgColor)),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 4, 10, 4),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            badge.Child = new TextBlock
+            {
+                Text = role,
+                FontSize = 11,
+                Foreground = role == "Cashier" ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF2D3E50")) : Brushes.White,
+                FontWeight = FontWeights.SemiBold
+            };
+
+            return badge;
+        }
+
+        private UIElement CreateStatusBadge(bool isActive)
+        {
+            var badge = new Border
+            {
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isActive ? "#FFD4EDDA" : "#FFF8D7DA")),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 4, 10, 4),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            badge.Child = new TextBlock
+            {
+                Text = isActive ? "Active" : "Inactive",
+                FontSize = 11,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isActive ? "#FF28A745" : "#FFDC3545")),
+                FontWeight = FontWeights.SemiBold
+            };
+
+            return badge;
+        }
+
+        // ===== CLICKABLE ROW LOGIC =====
+        private void UserRow_Click(object sender, MouseButtonEventArgs e)
+        {
+            Border clickedRow = sender as Border;
+            if (clickedRow == null) return;
+
+            _selectedUser = clickedRow.Tag as User;
+
+            // Reset previous highlight
+            if (_currentlySelectedRow != null && _currentlySelectedRow != clickedRow)
+            {
+                _currentlySelectedRow.Background = Brushes.White;
+            }
+
+            // Highlight new row
+            clickedRow.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8F9FA"));
+            _currentlySelectedRow = clickedRow;
+
+            // Build action buttons dynamically
+            BuildActionButtons();
+
+            // Show popup
+            actionButtonsPopup.PlacementTarget = clickedRow;
+            actionButtonsPopup.Placement = PlacementMode.MousePoint;
+            actionButtonsPopup.HorizontalOffset = 10;
+            actionButtonsPopup.VerticalOffset = 5;
+            actionButtonsPopup.IsOpen = true;
+        }
+
+        private void BuildActionButtons()
+        {
+            actionButtonsPanel.Children.Clear();
+
+            if (_selectedUser == null) return;
+
+            // Edit button
+            var btnEdit = new Button
+            {
+                Content = "Edit",
+                Width = 60,
+                Margin = new Thickness(0, 0, 8, 0),
+                Style = (Style)FindResource("EditButtonStyle")
+            };
+            btnEdit.Click += EditUser_Click;
+            actionButtonsPanel.Children.Add(btnEdit);
+
+            // Reset Password button
+            var btnResetPassword = new Button
+            {
+                Content = "Password",
+                Width = 80,
+                Margin = new Thickness(0, 0, 8, 0),
+                Style = (Style)FindResource("ResetPasswordButtonStyle")
+            };
+            btnResetPassword.Click += ResetPassword_Click;
+            actionButtonsPanel.Children.Add(btnResetPassword);
+
+            // Activate/Deactivate button (not for self)
+            if (_selectedUser.UserId != _currentUserId)
+            {
+                if (_selectedUser.IsActive)
+                {
+                    var btnDeactivate = new Button
+                    {
+                        Content = "Deactivate",
+                        Width = 85,
+                        Margin = new Thickness(0, 0, 8, 0),
+                        Style = (Style)FindResource("DeactivateButtonStyle")
+                    };
+                    btnDeactivate.Click += DeactivateUser_Click;
+                    actionButtonsPanel.Children.Add(btnDeactivate);
+                }
+                else
+                {
+                    var btnActivate = new Button
+                    {
+                        Content = "Activate",
+                        Width = 75,
+                        Margin = new Thickness(0, 0, 8, 0),
+                        Style = (Style)FindResource("ActivateButtonStyle")
+                    };
+                    btnActivate.Click += ActivateUser_Click;
+                    actionButtonsPanel.Children.Add(btnActivate);
+                }
+
+                // Delete button
+                var btnDelete = new Button
+                {
+                    Content = "Delete",
+                    Width = 70,
+                    Style = (Style)FindResource("DeleteButtonStyle")
+                };
+                btnDelete.Click += DeleteUser_Click;
+                actionButtonsPanel.Children.Add(btnDelete);
+            }
+        }
+
+        private void UserRow_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (actionButtonsPopup.IsOpen && !IsMouseOverPopup())
+            {
+                actionButtonsPopup.IsOpen = false;
+                if (_currentlySelectedRow != null)
+                {
+                    _currentlySelectedRow.Background = Brushes.White;
+                    _currentlySelectedRow = null;
+                }
+            }
+        }
+
+        private bool IsMouseOverPopup()
+        {
+            if (actionButtonsPopup.Child == null) return false;
+            Point mousePos = Mouse.GetPosition(actionButtonsPopup.Child as UIElement);
+            if (actionButtonsPopup.Child is FrameworkElement element)
+            {
+                return mousePos.X >= 0 && mousePos.X <= element.ActualWidth &&
+                       mousePos.Y >= 0 && mousePos.Y <= element.ActualHeight;
+            }
+            return false;
+        }
+
+        private void ActionButtonsPopup_Closed(object sender, EventArgs e)
+        {
+            if (_currentlySelectedRow != null)
+            {
+                _currentlySelectedRow.Background = Brushes.White;
+                _currentlySelectedRow = null;
+            }
+        }
+
+        // ===== ADD/EDIT USER =====
+        private void AddNewUser_Click(object sender, RoutedEventArgs e)
+        {
+            _isEditMode = false;
+            _selectedUser = null;
+            ClearModalFields();
+            txtModalTitle.Text = "Add New User";
+            btnSaveUser.Content = "Create User";
+            modalOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void EditUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedUser == null) return;
+
+            actionButtonsPopup.IsOpen = false;
+            _isEditMode = true;
+
+            txtModalTitle.Text = "Edit User";
+            btnSaveUser.Content = "Save Changes";
+
+            // Fill form with user data
+            txtModalFirstName.Text = _selectedUser.FirstName;
+            txtModalLastName.Text = _selectedUser.LastName;
+            txtModalUsername.Text = _selectedUser.Username;
+            txtModalEmail.Text = _selectedUser.Email ?? "";
+            txtModalPhone.Text = _selectedUser.Phone ?? "";
+
+            // Select role
+            foreach (ComboBoxItem item in cmbModalRole.Items)
+            {
+                if (item.Content.ToString() == _selectedUser.Role)
+                {
+                    cmbModalRole.SelectedItem = item;
+                    break;
+                }
+            }
+
+            modalOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void CloseModal_Click(object sender, RoutedEventArgs e)
+        {
+            modalOverlay.Visibility = Visibility.Collapsed;
+            ClearModalFields();
+        }
+
+        private void ClearModalFields()
+        {
+            txtModalFirstName.Text = "";
+            txtModalLastName.Text = "";
+            txtModalUsername.Text = "";
+            txtModalEmail.Text = "";
+            txtModalPhone.Text = "";
+            cmbModalRole.SelectedIndex = 0;
+        }
+
+        private void SaveUser_Click(object sender, RoutedEventArgs e)
+        {
+            // Validation
+            if (string.IsNullOrWhiteSpace(txtModalFirstName.Text) ||
+                string.IsNullOrWhiteSpace(txtModalLastName.Text) ||
+                string.IsNullOrWhiteSpace(txtModalUsername.Text))
+            {
+                MessageBox.Show("Please fill in all required fields (First Name, Last Name, Username).",
+                    "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!_userService.IsUsernameAvailable(txtModalUsername.Text, _isEditMode ? _selectedUser?.UserId : null))
+            {
+                MessageBox.Show("This username is already taken.", "Validation Error",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                string selectedRole = (cmbModalRole.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Operator";
+
+                if (_isEditMode && _selectedUser != null)
+                {
+                    _selectedUser.FirstName = txtModalFirstName.Text.Trim();
+                    _selectedUser.LastName = txtModalLastName.Text.Trim();
+                    _selectedUser.Username = txtModalUsername.Text.Trim();
+                    _selectedUser.Email = string.IsNullOrWhiteSpace(txtModalEmail.Text) ? null : txtModalEmail.Text.Trim();
+                    _selectedUser.Phone = string.IsNullOrWhiteSpace(txtModalPhone.Text) ? null : txtModalPhone.Text.Trim();
+                    _selectedUser.Role = selectedRole;
+
+                    _userService.UpdateUser(_selectedUser);
+                    MessageBox.Show("User updated successfully!", "Success",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    // Generuj Access Code zamiast tworzyć użytkownika z hasłem
+                    string accessCode = _userService.CreateUserWithAccessCode(
+                        txtModalFirstName.Text.Trim(),
+                        txtModalLastName.Text.Trim(),
+                        txtModalUsername.Text.Trim(),
+                        string.IsNullOrWhiteSpace(txtModalEmail.Text) ? null : txtModalEmail.Text.Trim(),
+                        string.IsNullOrWhiteSpace(txtModalPhone.Text) ? null : txtModalPhone.Text.Trim(),
+                        selectedRole,
+                        _currentUserId
+                    );
+
+                    // Pokaż kod dostępu managerowi
+                    ShowAccessCodeDialog(accessCode, txtModalFirstName.Text.Trim(), txtModalLastName.Text.Trim(), txtModalUsername.Text.Trim());
+                }
+
+                modalOverlay.Visibility = Visibility.Collapsed;
+                ClearModalFields();
+                LoadUsers();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving user: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ShowAccessCodeDialog(string accessCode, string firstName, string lastName, string username)
+        {
+            string message = $"Access Code Generated Successfully!\n\n" +
+                           $"Employee: {firstName} {lastName}\n" +
+                           $"Username: {username}\n\n" +
+                           $"═══════════════════════════\n" +
+                           $"ACCESS CODE: {accessCode}\n" +
+                           $"═══════════════════════════\n\n" +
+                           $"Please give this code to the employee.\n" +
+                           $"They will use it to set their password and activate their account.\n\n" +
+                           $"Click OK to copy the code to clipboard.";
+
+            MessageBox.Show(message, "Access Code Created", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Kopiuj kod do schowka
+            Clipboard.SetText(accessCode);
+        }
+
+        // ===== RESET PASSWORD =====
+        private void ResetPassword_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedUser == null) return;
+
+            actionButtonsPopup.IsOpen = false;
+
+            var result = MessageBox.Show(
+                $"Are you sure you want to reset password for user:\n\n" +
+                $"Name: {_selectedUser.FullName}\n" +
+                $"Username: {_selectedUser.Username}\n" +
+                $"Role: {_selectedUser.Role}\n\n" +
+                $"A password reset code will be generated that the user can use to set a new password.",
+                "Confirm Password Reset",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    string resetCode = _userService.CreatePasswordResetCode(_selectedUser.UserId, _currentUserId);
+
+                    if (string.IsNullOrEmpty(resetCode))
+                    {
+                        MessageBox.Show("Error generating reset code.", "Error", 
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    string message = $"PASSWORD RESET CODE CREATED\n\n" +
+                                   $"For user: {_selectedUser.FullName}\n" +
+                                   $"Username: {_selectedUser.Username}\n\n" +
+                                   $"═══════════════════════════\n" +
+                                   $"RESET CODE: {resetCode}\n" +
+                                   $"═══════════════════════════\n\n" +
+                                   $"Please give this code to the employee.\n" +
+                                   $"They will use it on the login screen to set a new password.\n\n" +
+                                   $"Click OK to copy the code to clipboard.";
+
+                    MessageBox.Show(message, "Reset Code Created", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Clipboard.SetText(resetCode);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error generating reset code: {ex.Message}", "Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void CloseResetPasswordModal_Click(object sender, RoutedEventArgs e)
+        {
+            resetPasswordOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void ConfirmResetPassword_Click(object sender, RoutedEventArgs e)
+        {
+            resetPasswordOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        // ===== ACTIVATE/DEACTIVATE/DELETE =====
+        private void DeactivateUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedUser == null || _selectedUser.UserId == _currentUserId) return;
+
+            actionButtonsPopup.IsOpen = false;
+
+            var result = MessageBox.Show($"Deactivate user {_selectedUser.FullName}?\n\nThis user will no longer be able to log in.",
+                "Confirm Deactivation", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _userService.DeactivateUser(_selectedUser.UserId);
+                    LoadUsers();
+                    MessageBox.Show($"User {_selectedUser.FullName} has been deactivated.", "Success",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ActivateUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedUser == null) return;
+
+            actionButtonsPopup.IsOpen = false;
+
+            var result = MessageBox.Show($"Activate user {_selectedUser.FullName}?\n\nThis user will be able to log in again.",
+                "Confirm Activation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _userService.ActivateUser(_selectedUser.UserId);
+                    LoadUsers();
+                    MessageBox.Show($"User {_selectedUser.FullName} has been activated.", "Success",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void DeleteUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedUser == null || _selectedUser.UserId == _currentUserId) return;
+
+            actionButtonsPopup.IsOpen = false;
+
+            if (!_userService.CanDeleteUser(_selectedUser.UserId, out string reason))
+            {
+                MessageBox.Show(reason, "Cannot Delete", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Delete user {_selectedUser.FullName}?\n\nUsername: {_selectedUser.Username}\nRole: {_selectedUser.Role}\n\nThis action cannot be undone!",
+                "Confirm Deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _userService.DeleteUser(_selectedUser.UserId);
+                    LoadUsers();
+                    MessageBox.Show($"User {_selectedUser.FullName} has been deleted.", "Success",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        // ===== MENU EVENTS =====
         private void ConnectMenuEvents()
         {
             sideMenu.DashboardClicked += (s, e) =>
@@ -89,12 +764,6 @@ namespace CycleDesk
                 Close();
             };
 
-            sideMenu.InvoicesClicked += (s, e) =>
-            {
-                new InvoicesWindow(_username, _password, _fullName, _role).Show();
-                Close();
-            };
-
             sideMenu.SalesReportsClicked += (s, e) =>
             {
                 new SalesReportsWindow(_username, _password, _fullName, _role).Show();
@@ -113,10 +782,7 @@ namespace CycleDesk
                 Close();
             };
 
-            sideMenu.UsersClicked += (s, e) =>
-            {
-                // Już jesteśmy na tej stronie - nic nie rób
-            };
+            sideMenu.UsersClicked += (s, e) => LoadUsers();
 
             sideMenu.SettingsClicked += (s, e) =>
             {
@@ -124,644 +790,17 @@ namespace CycleDesk
                 Close();
             };
 
-            sideMenu.LogoutClicked += (s, e) => HandleLogout();
-        }
-
-        private void HandleLogout()
-        {
-            var result = MessageBox.Show("Are you sure you want to logout?",
-                                        "Confirm Logout",
-                                        MessageBoxButton.YesNo,
-                                        MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+            sideMenu.LogoutClicked += (s, e) =>
             {
-                new MainWindow().Show();
-                Close();
-            }
-        }
+                var result = MessageBox.Show("Are you sure you want to logout?",
+                    "Confirm Logout", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
-        // ===== DATA MODELS =====
-        public class User
-        {
-            public int Id { get; set; }
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-            public string FullName => $"{FirstName} {LastName}";
-            public string Initials => $"{FirstName[0]}{LastName[0]}";
-            public string Username { get; set; }
-            public string Role { get; set; } // Administrator, Manager, Cashier
-            public string AccessCode { get; set; }
-            public string Status { get; set; } // Active, Pending, Inactive
-            public DateTime CreatedDate { get; set; }
-            public string CreatedDateFormatted => CreatedDate.ToString("dd.MM.yyyy");
-            public DateTime? LastLoginDate { get; set; }
-            public string LastLoginFormatted => LastLoginDate?.ToString("dd.MM.yyyy HH:mm") ?? "-";
-
-            public SolidColorBrush RoleColor
-            {
-                get
+                if (result == MessageBoxResult.Yes)
                 {
-                    return Role switch
-                    {
-                        "Administrator" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDC3545")),
-                        "Manager" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF17A2B8")),
-                        "Cashier" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF28A745")),
-                        _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D"))
-                    };
-                }
-            }
-
-            public SolidColorBrush StatusColor
-            {
-                get
-                {
-                    return Status switch
-                    {
-                        "Active" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF28A745")),
-                        "Pending" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFC107")),
-                        "Inactive" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDC3545")),
-                        _ => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D"))
-                    };
-                }
-            }
-
-            public string DisplayAccessCode => Status == "Pending" ? AccessCode : "•••••••••••";
-        }
-
-        // ===== MOCK DATA =====
-        private void LoadMockUsers()
-        {
-            _allUsers = new ObservableCollection<User>
-            {
-                new User
-                {
-                    Id = 1,
-                    FirstName = "Admin",
-                    LastName = "User",
-                    Username = "admin1",
-                    Role = "Administrator",
-                    AccessCode = "12345678901",
-                    Status = "Active",
-                    CreatedDate = new DateTime(2025, 1, 1),
-                    LastLoginDate = DateTime.Now.AddHours(-2)
-                },
-                new User
-                {
-                    Id = 2,
-                    FirstName = "Anna",
-                    LastName = "Kowalska",
-                    Username = "akowalska",
-                    Role = "Manager",
-                    AccessCode = "23456789012",
-                    Status = "Active",
-                    CreatedDate = new DateTime(2025, 10, 5),
-                    LastLoginDate = DateTime.Now.AddDays(-1)
-                },
-                new User
-                {
-                    Id = 3,
-                    FirstName = "Jan",
-                    LastName = "Nowak",
-                    Username = "jnowak",
-                    Role = "Cashier",
-                    AccessCode = "34567890123",
-                    Status = "Active",
-                    CreatedDate = new DateTime(2025, 10, 10),
-                    LastLoginDate = DateTime.Now.AddHours(-5)
-                },
-                new User
-                {
-                    Id = 4,
-                    FirstName = "Sarah",
-                    LastName = "Johnson",
-                    Username = "sjohnson",
-                    Role = "Cashier",
-                    AccessCode = "45678901234",
-                    Status = "Active",
-                    CreatedDate = new DateTime(2025, 10, 15),
-                    LastLoginDate = DateTime.Now.AddDays(-2)
-                },
-                new User
-                {
-                    Id = 5,
-                    FirstName = "Tom",
-                    LastName = "Brown",
-                    Username = "tbrown",
-                    Role = "Manager",
-                    AccessCode = "56789012345",
-                    Status = "Active",
-                    CreatedDate = new DateTime(2025, 10, 20),
-                    LastLoginDate = DateTime.Now.AddDays(-1)
-                },
-                new User
-                {
-                    Id = 6,
-                    FirstName = "Piotr",
-                    LastName = "Kowal",
-                    Username = "pkowal",
-                    Role = "Cashier",
-                    AccessCode = "67890123456",
-                    Status = "Pending",
-                    CreatedDate = new DateTime(2025, 11, 17),
-                    LastLoginDate = null
-                },
-                new User
-                {
-                    Id = 7,
-                    FirstName = "Maria",
-                    LastName = "Wiśniewska",
-                    Username = "mwisniewski",
-                    Role = "Manager",
-                    AccessCode = "78901234567",
-                    Status = "Pending",
-                    CreatedDate = new DateTime(2025, 11, 18),
-                    LastLoginDate = null
-                },
-                new User
-                {
-                    Id = 8,
-                    FirstName = "John",
-                    LastName = "Smith",
-                    Username = "jsmith",
-                    Role = "Manager",
-                    AccessCode = "89012345678",
-                    Status = "Inactive",
-                    CreatedDate = new DateTime(2025, 8, 1),
-                    LastLoginDate = new DateTime(2025, 11, 10, 12, 0, 0)
+                    new MainWindow().Show();
+                    Close();
                 }
             };
-
-            _filteredUsers = new ObservableCollection<User>(_allUsers);
-        }
-
-        // ===== FILTERING =====
-        private void ApplyFilters()
-        {
-            string searchText = txtSearch.Text.ToLower();
-
-            var filtered = _allUsers.AsEnumerable();
-
-            // Search filter
-            if (!string.IsNullOrWhiteSpace(searchText))
-            {
-                filtered = filtered.Where(u =>
-                    u.FullName.ToLower().Contains(searchText) ||
-                    u.Username.ToLower().Contains(searchText) ||
-                    u.Role.ToLower().Contains(searchText));
-            }
-
-            _filteredUsers = new ObservableCollection<User>(filtered);
-
-            // Update UI
-            UpdateKPIs();
-            GenerateUserTable();
-        }
-
-        private void Search_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (IsLoaded)
-            {
-                ApplyFilters();
-            }
-        }
-
-        private void UpdateKPIs()
-        {
-            // Total Users
-            txtTotalUsers.Text = _allUsers.Count.ToString();
-
-            // Active Users
-            int activeCount = _allUsers.Count(u => u.Status == "Active");
-            txtActiveUsers.Text = activeCount.ToString();
-
-            // Pending Users
-            int pendingCount = _allUsers.Count(u => u.Status == "Pending");
-            txtPendingUsers.Text = pendingCount.ToString();
-
-            // Inactive Users
-            int inactiveCount = _allUsers.Count(u => u.Status == "Inactive");
-            txtInactiveUsers.Text = inactiveCount.ToString();
-        }
-
-        private void GenerateUserTable()
-        {
-            // Clear existing rows (keep header)
-            while (usersPanel.Children.Count > 1)
-            {
-                usersPanel.Children.RemoveAt(1);
-            }
-
-            // Add user rows
-            foreach (var user in _filteredUsers)
-            {
-                AddUserRow(user);
-            }
-        }
-
-        private void AddUserRow(User user)
-        {
-            var border = new Border
-            {
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDEE2E6")),
-                BorderThickness = new Thickness(0, 1, 0, 0),
-                Background = Brushes.White,
-                Padding = new Thickness(0, 15, 0, 15)
-            };
-
-            var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
-
-            // Avatar
-            var avatarBorder = new Border
-            {
-                Width = 40,
-                Height = 40,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8F9FA")),
-                CornerRadius = new CornerRadius(20),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            var txtAvatar = new TextBlock
-            {
-                Text = user.Initials,
-                FontSize = 14,
-                FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF2D3E50")),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            avatarBorder.Child = txtAvatar;
-            Grid.SetColumn(avatarBorder, 0);
-            grid.Children.Add(avatarBorder);
-
-            // Full Name
-            var txtName = new TextBlock
-            {
-                Text = user.FullName,
-                FontSize = 13,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF2D3E50")),
-                FontWeight = FontWeights.Medium,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            Grid.SetColumn(txtName, 1);
-            grid.Children.Add(txtName);
-
-            // Username
-            var txtUsername = new TextBlock
-            {
-                Text = user.Username,
-                FontSize = 13,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D")),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            Grid.SetColumn(txtUsername, 2);
-            grid.Children.Add(txtUsername);
-
-            // Role Badge
-            var roleBorder = new Border
-            {
-                Background = user.RoleColor,
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10, 4, 10, 4),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            var txtRole = new TextBlock
-            {
-                Text = user.Role,
-                FontSize = 11,
-                Foreground = Brushes.White,
-                FontWeight = FontWeights.SemiBold
-            };
-            roleBorder.Child = txtRole;
-            Grid.SetColumn(roleBorder, 3);
-            grid.Children.Add(roleBorder);
-
-            // Access Code
-            var txtCode = new TextBlock
-            {
-                Text = user.DisplayAccessCode,
-                FontSize = 13,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D")),
-                VerticalAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Consolas")
-            };
-            Grid.SetColumn(txtCode, 4);
-            grid.Children.Add(txtCode);
-
-            // Status Badge
-            var statusBorder = new Border
-            {
-                Background = user.Status == "Active"
-                    ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD4EDDA"))
-                    : user.Status == "Pending"
-                        ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFEF3CD"))
-                        : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8D7DA")),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10, 4, 10, 4),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            var txtStatus = new TextBlock
-            {
-                Text = user.Status,
-                FontSize = 11,
-                Foreground = user.StatusColor,
-                FontWeight = FontWeights.SemiBold
-            };
-            statusBorder.Child = txtStatus;
-            Grid.SetColumn(statusBorder, 5);
-            grid.Children.Add(statusBorder);
-
-            // Last Login
-            var txtLastLogin = new TextBlock
-            {
-                Text = user.LastLoginFormatted,
-                FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D")),
-                VerticalAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Center
-            };
-            Grid.SetColumn(txtLastLogin, 6);
-            grid.Children.Add(txtLastLogin);
-
-            // Created Date
-            var txtCreated = new TextBlock
-            {
-                Text = user.CreatedDateFormatted,
-                FontSize = 12,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6C757D")),
-                VerticalAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Center
-            };
-            Grid.SetColumn(txtCreated, 7);
-            grid.Children.Add(txtCreated);
-
-            // Actions (buttons depending on status)
-            var actionsPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            if (user.Status == "Active")
-            {
-                // Edit button
-                var btnEdit = CreateActionButton("✏️", "#FF17A2B8");
-                btnEdit.Click += (s, e) => EditUser_Click(user);
-                actionsPanel.Children.Add(btnEdit);
-
-                // Deactivate button
-                var btnDeactivate = CreateActionButton("🔒", "#FFFFC107");
-                btnDeactivate.Click += (s, e) => DeactivateUser_Click(user);
-                actionsPanel.Children.Add(btnDeactivate);
-
-                // Delete button
-                var btnDelete = CreateActionButton("🗑️", "#FFDC3545");
-                btnDelete.Click += (s, e) => DeleteUser_Click(user);
-                actionsPanel.Children.Add(btnDelete);
-            }
-            else if (user.Status == "Pending")
-            {
-                // Edit button
-                var btnEdit = CreateActionButton("✏️", "#FF17A2B8");
-                btnEdit.Click += (s, e) => EditUser_Click(user);
-                actionsPanel.Children.Add(btnEdit);
-
-                // Reset Code button
-                var btnReset = CreateActionButton("🔄", "#FFFFC107");
-                btnReset.Click += (s, e) => ResetCode_Click(user);
-                actionsPanel.Children.Add(btnReset);
-
-                // Copy Code button
-                var btnCopy = CreateActionButton("📋", "#FF28A745");
-                btnCopy.Click += (s, e) => CopyCode_Click(user);
-                actionsPanel.Children.Add(btnCopy);
-
-                // Delete button
-                var btnDelete = CreateActionButton("🗑️", "#FFDC3545");
-                btnDelete.Click += (s, e) => DeleteUser_Click(user);
-                actionsPanel.Children.Add(btnDelete);
-            }
-            else if (user.Status == "Inactive")
-            {
-                // Edit button
-                var btnEdit = CreateActionButton("✏️", "#FF17A2B8");
-                btnEdit.Click += (s, e) => EditUser_Click(user);
-                actionsPanel.Children.Add(btnEdit);
-
-                // Activate button
-                var btnActivate = CreateActionButton("🔓", "#FF28A745");
-                btnActivate.Click += (s, e) => ActivateUser_Click(user);
-                actionsPanel.Children.Add(btnActivate);
-
-                // Delete button
-                var btnDelete = CreateActionButton("🗑️", "#FFDC3545");
-                btnDelete.Click += (s, e) => DeleteUser_Click(user);
-                actionsPanel.Children.Add(btnDelete);
-            }
-
-            Grid.SetColumn(actionsPanel, 8);
-            grid.Children.Add(actionsPanel);
-
-            border.Child = grid;
-            usersPanel.Children.Add(border);
-        }
-
-        private Button CreateActionButton(string content, string colorHex)
-        {
-            var button = new Button
-            {
-                Content = content,
-                Width = 32,
-                Height = 32,
-                Margin = new Thickness(2),
-                Background = Brushes.Transparent,
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex)),
-                BorderThickness = new Thickness(1),
-                Cursor = System.Windows.Input.Cursors.Hand,
-                FontSize = 13
-            };
-
-            var style = new Style(typeof(Button));
-            var template = new ControlTemplate(typeof(Button));
-
-            var borderFactory = new FrameworkElementFactory(typeof(Border));
-            borderFactory.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
-            borderFactory.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Button.BorderBrushProperty));
-            borderFactory.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Button.BorderThicknessProperty));
-            borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
-
-            var contentFactory = new FrameworkElementFactory(typeof(ContentPresenter));
-            contentFactory.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            contentFactory.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
-            borderFactory.AppendChild(contentFactory);
-
-            template.VisualTree = borderFactory;
-
-            var trigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
-            trigger.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8F9FA"))));
-            template.Triggers.Add(trigger);
-
-            style.Setters.Add(new Setter(Button.TemplateProperty, template));
-            button.Style = style;
-
-            return button;
-        }
-
-        // ===== ACTION HANDLERS =====
-        private void AddNewUser_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Add New User modal - to be implemented\n\n" +
-                          "Will open a form with:\n" +
-                          "- First Name\n" +
-                          "- Last Name\n" +
-                          "- Username\n" +
-                          "- Role (ComboBox)\n" +
-                          "- Auto-generated Access Code\n\n" +
-                          "User will be created with status 'Pending'",
-                          "Add New User", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void EditUser_Click(User user)
-        {
-            MessageBox.Show($"Edit User: {user.FullName}\n\n" +
-                          $"Current Status: {user.Status}\n" +
-                          $"Username: {user.Username}\n" +
-                          $"Role: {user.Role}\n\n" +
-                          "Edit modal - to be implemented",
-                          "Edit User", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void DeactivateUser_Click(User user)
-        {
-            var result = MessageBox.Show($"Deactivate user {user.FullName}?\n\n" +
-                                       $"This user will no longer be able to log in.",
-                                       "Confirm Deactivation",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                user.Status = "Inactive";
-                ApplyFilters();
-                MessageBox.Show($"User {user.FullName} has been deactivated.", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void ActivateUser_Click(User user)
-        {
-            var result = MessageBox.Show($"Activate user {user.FullName}?\n\n" +
-                                       $"This user will be able to log in again.",
-                                       "Confirm Activation",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                user.Status = "Active";
-                ApplyFilters();
-                MessageBox.Show($"User {user.FullName} has been activated.", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void ResetCode_Click(User user)
-        {
-            var result = MessageBox.Show($"Generate new Access Code for {user.FullName}?\n\n" +
-                                       $"Current code: {user.AccessCode}\n" +
-                                       $"The old code will stop working.",
-                                       "Reset Access Code",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                // Generate new code
-                Random random = new Random();
-                string newCode = string.Empty;
-                for (int i = 0; i < 11; i++)
-                {
-                    newCode += random.Next(0, 10).ToString();
-                }
-
-                user.AccessCode = newCode;
-                ApplyFilters();
-
-                MessageBox.Show($"New Access Code generated for {user.FullName}:\n\n" +
-                              $"{newCode}\n\n" +
-                              $"Please share this code with the employee.",
-                              "New Code Generated",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Information);
-            }
-        }
-
-        private void CopyCode_Click(User user)
-        {
-            try
-            {
-                Clipboard.SetText(user.AccessCode);
-                MessageBox.Show($"Access Code copied to clipboard:\n\n{user.AccessCode}",
-                              "Copied", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to copy to clipboard: {ex.Message}",
-                              "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void DeleteUser_Click(User user)
-        {
-            // Check if trying to delete self
-            if (user.Username == _username)
-            {
-                MessageBox.Show("You cannot delete your own account!",
-                              "Cannot Delete", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Check if last admin
-            if (user.Role == "Administrator")
-            {
-                int adminCount = _allUsers.Count(u => u.Role == "Administrator");
-                if (adminCount <= 1)
-                {
-                    MessageBox.Show("Cannot delete the last Administrator!\n\n" +
-                                  "There must be at least one Administrator in the system.",
-                                  "Cannot Delete", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-            }
-
-            var result = MessageBox.Show($"Delete user {user.FullName}?\n\n" +
-                                       $"Username: {user.Username}\n" +
-                                       $"Role: {user.Role}\n\n" +
-                                       $"This action cannot be undone!",
-                                       "Confirm Deletion",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                _allUsers.Remove(user);
-                ApplyFilters();
-                MessageBox.Show($"User {user.FullName} has been deleted.", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
         }
     }
 }

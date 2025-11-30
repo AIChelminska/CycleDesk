@@ -44,7 +44,7 @@ namespace CycleDesk
             sideMenu.SuppliersClicked += (s, e) => NavigateToSuppliers();
             sideMenu.NewSaleClicked += (s, e) => NavigateToNewSale();
             sideMenu.SalesHistoryClicked += (s, e) => NavigateToSalesHistory();
-            sideMenu.InvoicesClicked += (s, e) => NavigateToInvoices();
+            
             sideMenu.SalesReportsClicked += (s, e) => NavigateToSalesReports();
             sideMenu.InventoryReportsClicked += (s, e) => NavigateToInventoryReports();
             sideMenu.ProductsToOrderClicked += (s, e) => NavigateToProductsToOrder();

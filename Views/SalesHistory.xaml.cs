@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using CycleDesk.Services;
 
 namespace CycleDesk
 {
@@ -15,8 +16,14 @@ namespace CycleDesk
         private string _password;
         private string _fullName;
         private string _role;
+        private SaleService _saleService;
         private ObservableCollection<TransactionRecord> _allTransactions;
         private ObservableCollection<TransactionRecord> _filteredTransactions;
+
+        // Pagination
+        private const int PageSize = 30;
+        private int _currentPage = 1;
+        private int _totalPages = 1;
 
         public SalesHistoryWindow(string username, string password, string fullName, string role)
         {
@@ -25,6 +32,7 @@ namespace CycleDesk
             _password = password;
             _fullName = fullName;
             _role = role;
+            _saleService = new SaleService();
 
             // Inicjalizuj SideMenuControl
             sideMenu.Initialize(fullName, role);
@@ -33,9 +41,8 @@ namespace CycleDesk
             // Podłącz eventy menu
             ConnectMenuEvents();
 
-            // Initialize transactions
-            LoadMockTransactions();
-            ApplyFilters();
+            // Load transactions from database
+            LoadTransactions();
         }
 
         // ===== MENU EVENTS CONNECTION =====
@@ -85,14 +92,11 @@ namespace CycleDesk
 
             sideMenu.SalesHistoryClicked += (s, e) =>
             {
-                // Już jesteśmy na tej stronie - nic nie rób
+                // Already on this page - refresh data
+                LoadTransactions();
             };
 
-            sideMenu.InvoicesClicked += (s, e) =>
-            {
-                new InvoicesWindow(_username, _password, _fullName, _role).Show();
-                Close();
-            };
+           
 
             sideMenu.SalesReportsClicked += (s, e) =>
             {
@@ -144,12 +148,14 @@ namespace CycleDesk
         // ===== DATA MODELS =====
         public class TransactionRecord
         {
+            public int SaleId { get; set; }
             public string TransactionNumber { get; set; }
             public DateTime DateTime { get; set; }
             public string DateTimeFormatted => DateTime.ToString("dd MMM yyyy, HH:mm");
             public int ItemsCount { get; set; }
             public string CashierName { get; set; }
             public string DocumentType { get; set; } // "Receipt" or "Invoice"
+            public string Status { get; set; }
             public SolidColorBrush DocumentTypeColor
             {
                 get
@@ -169,6 +175,17 @@ namespace CycleDesk
                         : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF17A2B8"));
                 }
             }
+            public SolidColorBrush StatusColor
+            {
+                get
+                {
+                    return Status == "Completed"
+                        ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF28A745"))
+                        : Status == "Cancelled"
+                            ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFDC3545"))
+                            : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFC107"));
+                }
+            }
             public decimal Total { get; set; }
             public List<TransactionItem> Items { get; set; }
         }
@@ -182,113 +199,60 @@ namespace CycleDesk
             public decimal Subtotal => Quantity * UnitPrice;
         }
 
-        // ===== MOCK DATA =====
-        private void LoadMockTransactions()
+        // ===== LOAD DATA FROM DATABASE =====
+        private void LoadTransactions()
         {
-            _allTransactions = new ObservableCollection<TransactionRecord>
+            try
             {
-                new TransactionRecord
-                {
-                    TransactionNumber = "#TRX202511161443522",
-                    DateTime = new DateTime(2025, 11, 16, 14, 30, 0),
-                    ItemsCount = 3,
-                    CashierName = "Admin User",
-                    DocumentType = "Receipt",
-                    PaymentMethod = "Cash",
-                    Total = 3300.08m,
-                    Items = new List<TransactionItem>
-                    {
-                        new TransactionItem { ProductName = "Mountain Bike Pro X", SKU = "BIKE-001", Quantity = 1, UnitPrice = 2499.00m },
-                        new TransactionItem { ProductName = "Safety Helmet Pro", SKU = "HELM-001", Quantity = 1, UnitPrice = 149.00m },
-                        new TransactionItem { ProductName = "LED Light Set", SKU = "LIGH-001", Quantity = 1, UnitPrice = 14.99m }
-                    }
-                },
-                new TransactionRecord
-                {
-                    TransactionNumber = "#TRX202511161301245",
-                    DateTime = new DateTime(2025, 11, 16, 13, 15, 0),
-                    ItemsCount = 2,
-                    CashierName = "John Smith",
-                    DocumentType = "Invoice",
-                    PaymentMethod = "Card",
-                    Total = 1899.00m,
-                    Items = new List<TransactionItem>
-                    {
-                        new TransactionItem { ProductName = "Road Bike Elite", SKU = "BIKE-002", Quantity = 1, UnitPrice = 1799.00m },
-                        new TransactionItem { ProductName = "Water Bottle", SKU = "ACCS-004", Quantity = 2, UnitPrice = 50.00m }
-                    }
-                },
-                new TransactionRecord
-                {
-                    TransactionNumber = "#TRX202511151745891",
-                    DateTime = new DateTime(2025, 11, 15, 17, 45, 0),
-                    ItemsCount = 5,
-                    CashierName = "Admin User",
-                    DocumentType = "Receipt",
-                    PaymentMethod = "Cash",
-                    Total = 425.50m,
-                    Items = new List<TransactionItem>
-                    {
-                        new TransactionItem { ProductName = "Bike Lock Premium", SKU = "ACCS-001", Quantity = 2, UnitPrice = 89.99m },
-                        new TransactionItem { ProductName = "Repair Kit", SKU = "TOOL-001", Quantity = 1, UnitPrice = 45.00m },
-                        new TransactionItem { ProductName = "Chain Lubricant", SKU = "MAIN-001", Quantity = 3, UnitPrice = 12.00m },
-                        new TransactionItem { ProductName = "Tire Pump", SKU = "TOOL-002", Quantity = 1, UnitPrice = 79.00m }
-                    }
-                },
-                new TransactionRecord
-                {
-                    TransactionNumber = "#TRX202511151342167",
-                    DateTime = new DateTime(2025, 11, 15, 13, 42, 0),
-                    ItemsCount = 1,
-                    CashierName = "Sarah Johnson",
-                    DocumentType = "Invoice",
-                    PaymentMethod = "Card",
-                    Total = 3499.00m,
-                    Items = new List<TransactionItem>
-                    {
-                        new TransactionItem { ProductName = "Electric Bike Ultra", SKU = "BIKE-003", Quantity = 1, UnitPrice = 3499.00m }
-                    }
-                },
-                new TransactionRecord
-                {
-                    TransactionNumber = "#TRX202511141028443",
-                    DateTime = new DateTime(2025, 11, 14, 10, 28, 0),
-                    ItemsCount = 4,
-                    CashierName = "Admin User",
-                    DocumentType = "Receipt",
-                    PaymentMethod = "Cash",
-                    Total = 678.95m,
-                    Items = new List<TransactionItem>
-                    {
-                        new TransactionItem { ProductName = "Cycling Gloves Pro", SKU = "APPR-001", Quantity = 2, UnitPrice = 49.99m },
-                        new TransactionItem { ProductName = "Bike Computer GPS", SKU = "ELEC-001", Quantity = 1, UnitPrice = 299.00m },
-                        new TransactionItem { ProductName = "Energy Bars Pack", SKU = "FOOD-001", Quantity = 3, UnitPrice = 15.99m },
-                        new TransactionItem { ProductName = "Hydration Pack", SKU = "ACCS-005", Quantity = 1, UnitPrice = 199.00m }
-                    }
-                },
-                new TransactionRecord
-                {
-                    TransactionNumber = "#TRX202511131612334",
-                    DateTime = new DateTime(2025, 11, 13, 16, 12, 0),
-                    ItemsCount = 2,
-                    CashierName = "John Smith",
-                    DocumentType = "Invoice",
-                    PaymentMethod = "Card",
-                    Total = 2899.00m,
-                    Items = new List<TransactionItem>
-                    {
-                        new TransactionItem { ProductName = "Mountain Bike Pro X", SKU = "BIKE-001", Quantity = 1, UnitPrice = 2499.00m },
-                        new TransactionItem { ProductName = "Bike Stand", SKU = "ACCS-006", Quantity = 1, UnitPrice = 400.00m }
-                    }
-                }
-            };
+                var salesHistory = _saleService.GetSalesHistory();
 
-            _filteredTransactions = new ObservableCollection<TransactionRecord>(_allTransactions);
+                _allTransactions = new ObservableCollection<TransactionRecord>(
+                    salesHistory.Select(s => new TransactionRecord
+                    {
+                        SaleId = s.SaleId,
+                        TransactionNumber = s.SaleNumber,
+                        DateTime = s.SaleDate,
+                        ItemsCount = s.ItemsCount,
+                        CashierName = s.CashierName,
+                        DocumentType = s.DocumentType,
+                        PaymentMethod = s.PaymentMethod,
+                        Status = s.Status,
+                        Total = s.TotalAmount,
+                        Items = new List<TransactionItem>() // Loaded on demand
+                    })
+                );
+
+                ApplyFilters();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading sales history: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                _allTransactions = new ObservableCollection<TransactionRecord>();
+                _filteredTransactions = new ObservableCollection<TransactionRecord>();
+            }
+        }
+
+        private void LoadTransactionItems(TransactionRecord transaction)
+        {
+            if (transaction.Items == null || transaction.Items.Count == 0)
+            {
+                var items = _saleService.GetSaleItems(transaction.SaleId);
+                transaction.Items = items.Select(i => new TransactionItem
+                {
+                    ProductName = i.ProductName,
+                    SKU = i.SKU,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList();
+            }
         }
 
         // ===== FILTERING & SEARCH =====
         private void ApplyFilters()
         {
+            if (_allTransactions == null) return;
+
             var filtered = _allTransactions.AsEnumerable();
 
             // Search filter
@@ -326,15 +290,89 @@ namespace CycleDesk
             }
 
             _filteredTransactions = new ObservableCollection<TransactionRecord>(filtered.OrderByDescending(t => t.DateTime));
-            transactionsList.ItemsSource = _filteredTransactions;
+            
+            // Reset to first page when filters change
+            _currentPage = 1;
+            UpdatePagination();
+        }
+
+        private void UpdatePagination()
+        {
+            if (_filteredTransactions == null || _filteredTransactions.Count == 0)
+            {
+                _totalPages = 1;
+                _currentPage = 1;
+                transactionsList.ItemsSource = new ObservableCollection<TransactionRecord>();
+            }
+            else
+            {
+                _totalPages = (int)Math.Ceiling((double)_filteredTransactions.Count / PageSize);
+                if (_currentPage > _totalPages) _currentPage = _totalPages;
+                if (_currentPage < 1) _currentPage = 1;
+
+                var pagedData = _filteredTransactions
+                    .Skip((_currentPage - 1) * PageSize)
+                    .Take(PageSize)
+                    .ToList();
+
+                transactionsList.ItemsSource = new ObservableCollection<TransactionRecord>(pagedData);
+            }
+
+            // Update UI
+            lblPageInfo.Text = $"Page {_currentPage} of {_totalPages}";
+            btnFirstPage.IsEnabled = _currentPage > 1;
+            btnPrevPage.IsEnabled = _currentPage > 1;
+            btnNextPage.IsEnabled = _currentPage < _totalPages;
+            btnLastPage.IsEnabled = _currentPage < _totalPages;
 
             UpdateSummary();
         }
 
+        // ===== PAGINATION HANDLERS =====
+        private void FirstPage_Click(object sender, RoutedEventArgs e)
+        {
+            _currentPage = 1;
+            UpdatePagination();
+        }
+
+        private void PrevPage_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentPage > 1)
+            {
+                _currentPage--;
+                UpdatePagination();
+            }
+        }
+
+        private void NextPage_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentPage < _totalPages)
+            {
+                _currentPage++;
+                UpdatePagination();
+            }
+        }
+
+        private void LastPage_Click(object sender, RoutedEventArgs e)
+        {
+            _currentPage = _totalPages;
+            UpdatePagination();
+        }
+
         private void UpdateSummary()
         {
-            lblTotalTransactions.Text = $"Total Transactions: {_filteredTransactions.Count}";
-            lblTotalRevenue.Text = $"PLN {_filteredTransactions.Sum(t => t.Total):N2}";
+            if (_filteredTransactions == null)
+            {
+                lblTotalTransactions.Text = "Total Transactions: 0";
+                lblTotalRevenue.Text = "PLN 0.00";
+                return;
+            }
+
+            // Only count completed transactions for revenue (from ALL filtered, not just current page)
+            var completedTransactions = _filteredTransactions.Where(t => t.Status == "Completed").ToList();
+            
+            lblTotalTransactions.Text = $"Total Transactions: {_filteredTransactions.Count} (showing {Math.Min(PageSize, _filteredTransactions.Count - (_currentPage - 1) * PageSize)})";
+            lblTotalRevenue.Text = $"PLN {completedTransactions.Sum(t => t.Total):N2}";
         }
 
         // ===== SEARCH HANDLERS =====
@@ -346,7 +384,7 @@ namespace CycleDesk
         // ===== FILTER HANDLERS =====
         private void DateFilter_Changed(object sender, SelectionChangedEventArgs e)
         {
-            if (transactionsList != null) // Check if controls are initialized
+            if (transactionsList != null)
             {
                 ApplyFilters();
             }
@@ -388,6 +426,9 @@ namespace CycleDesk
             TransactionRecord transaction = clickedRow.DataContext as TransactionRecord;
             if (transaction == null) return;
 
+            // Load items if not already loaded
+            LoadTransactionItems(transaction);
+
             // Populate popup with transaction details
             popupTransactionNumber.Text = transaction.TransactionNumber;
             popupDateTime.Text = transaction.DateTimeFormatted;
@@ -420,7 +461,8 @@ namespace CycleDesk
             transactionDetailsPopup.IsOpen = false;
 
             // TODO: Open full transaction details window
-            MessageBox.Show("View full transaction details - to be implemented", "View Transaction", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("View full transaction details - to be implemented", "View Transaction", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void PrintTransaction_Click(object sender, RoutedEventArgs e)
@@ -429,7 +471,8 @@ namespace CycleDesk
             transactionDetailsPopup.IsOpen = false;
 
             // TODO: Print transaction receipt/invoice
-            MessageBox.Show("Print transaction - to be implemented", "Print", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Print transaction - to be implemented", "Print", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }
